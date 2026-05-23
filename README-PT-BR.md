@@ -158,6 +158,15 @@ Runner iterativo automatizado para desenvolvimento baseado em specs no [Kiro](ht
 
 ---
 
+### 🔐 auth.md — Protocolo de Autenticação para Agentes
+Gera, valida e explica arquivos [auth.md](https://auth-md.com) — o protocolo aberto que permite agentes de IA registrarem-se em serviços em nome de usuários sem formulários de signup. Suporta o fluxo Agent Verified (assertions de identidade ID-JAG via providers confiáveis como OpenAI, Anthropic, Cursor) e o fluxo User Claimed (registro baseado em OTP com entrypoints anonymous start ou email required). Estende o RFC 9728 (Protected Resource Metadata) com suporte a CIMD.
+
+**Quando usar:** tornar sua app agent-ready publicando um `auth.md`, gerar Protected Resource Metadata e Authorization Server metadata com bloco `agent_auth`, validar um `auth.md` existente contra a spec do protocolo, implementar endpoints de registro de agentes (`/agent/auth`, `/agent/auth/claim`, `/agent/auth/revoke`), entender como o protocolo auth.md funciona, configurar verificação de ID-JAG e trust lists, configurar cerimônias de claim OTP.
+
+📄 [Ver documentação completa](skills/auth-md/SKILL.md) | 🌐 [auth-md.com](https://auth-md.com)
+
+---
+
 > **Skills revisadas em março de 2026** seguindo o padrão Anthropic para estrutura e qualidade de Agent Skills.
 > Fonte: [Improving Skill Creator: Test, Measure and Refine Agent Skills](https://claude.com/blog/improving-skill-creator-test-measure-and-refine-agent-skills)
 
@@ -184,6 +193,7 @@ npx skills add https://gitlab.com/fabriciotelles/skills -s resume-ats-beater
 npx skills add https://gitlab.com/fabriciotelles/skills -s coolify-operator
 npx skills add https://gitlab.com/fabriciotelles/skills -s agent-ready-cloudflare
 npx skills add https://gitlab.com/fabriciotelles/skills -s ralph-loop-kiro-specs
+npx skills add https://gitlab.com/fabriciotelles/skills -s auth-md
 ```
 
 ### Via [Agent Skills CLI](https://www.agentskills.in/docs)
@@ -224,6 +234,7 @@ cp -r skills/resume-ats-beater .cursor/skills/
 cp -r skills/coolify-operator .cursor/skills/
 cp -r skills/agent-ready-cloudflare .cursor/skills/
 cp -r skills/ralph-loop-kiro-specs .cursor/skills/
+cp -r skills/auth-md .cursor/skills/
 
 # Exemplo para Claude Code
 cp -r skills/premium-proposal-builder .claude/skills/
@@ -236,6 +247,7 @@ cp -r skills/resume-ats-beater .claude/skills/
 cp -r skills/coolify-operator .claude/skills/
 cp -r skills/agent-ready-cloudflare .claude/skills/
 cp -r skills/ralph-loop-kiro-specs .claude/skills/
+cp -r skills/auth-md .claude/skills/
 
 # Exemplo para Kiro
 cp -r skills/premium-proposal-builder .kiro/skills/
@@ -248,6 +260,7 @@ cp -r skills/resume-ats-beater .kiro/skills/
 cp -r skills/coolify-operator .kiro/skills/
 cp -r skills/agent-ready-cloudflare .kiro/skills/
 cp -r skills/ralph-loop-kiro-specs .kiro/skills/
+cp -r skills/auth-md .kiro/skills/
 ```
 
 O formato Agent Skills e universal e funciona com qualquer agente compativel. Veja a [especificacao oficial](https://agentskills.io/specification.md) para detalhes.
@@ -289,6 +302,9 @@ skills/
 │   ├── SKILL.md
 │   ├── scripts/           # script bash do loop runner
 │   └── references/        # template do prompt do agente Ralph
+├── auth-md/
+│   ├── SKILL.md
+│   └── references/        # template do protocolo, regras de validação, schema de metadata, exemplo, guia de implementação
 ```
 
 ## Autor
