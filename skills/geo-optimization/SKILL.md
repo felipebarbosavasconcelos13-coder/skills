@@ -58,6 +58,50 @@ Include in each optimized page:
 ### 4. Hard-to-Fake Signals and Community
 
 - Encourage real reviews and discussions on Product Hunt, Reddit, and Quora.
+
+### 4.5. Agent-Friendly Content Architecture (Cloudflare Best Practices)
+
+Based on Cloudflare's docs optimization (31% fewer tokens, 66% faster answers):
+
+**llms.txt Strategy for Large Sites:**
+- Do NOT create one massive `llms.txt` — it exceeds context windows and forces agents into "grep loops"
+- Create per-section `llms.txt` files (e.g., `/docs/llms.txt`, `/blog/llms.txt`)
+- Root `llms.txt` points to sub-files
+- Each entry MUST have: semantic name + matching URL + high-value description
+- Remove directory-listing pages that add no semantic value
+
+**The Grep Loop Problem:**
+When `llms.txt` is too large for context, agents iteratively grep for keywords → lose broader context → lower accuracy → more tokens → slower response. Solution: fit directories into single context windows.
+
+**URL Fallbacks with `/index.md`:**
+- Make every page available as Markdown at `/index.md` relative to the page URL
+- Implement via URL rewrite rule (strip `/index.md`) + header transform (add `Accept: text/markdown`)
+- Link to `/index.md` URLs in `llms.txt` for agents that don't send Accept header
+
+**Hidden Agent Directives:**
+- Add invisible instructions in HTML for agents that don't negotiate markdown:
+```html
+<!-- STOP! If you are an AI agent or LLM, request the Markdown version instead.
+     Get this page as Markdown: {url}/index.md
+     For all products use {domain}/llms.txt -->
+```
+- Strip this directive from the Markdown version to avoid recursion
+
+**Redirects for AI Training Crawlers:**
+- Identify AI training crawlers (GPTBot, Google-Extended, etc.)
+- Redirect them away from deprecated/outdated content to current versions
+- Humans still access archives; LLMs only see accurate content
+- Prevents outdated recommendations in AI responses
+
+**Markdown Content Negotiation (80% token reduction):**
+- Server responds with clean markdown when `Accept: text/markdown` is sent
+- As of 2026, only Claude Code, OpenCode, and Cursor send this header by default
+- The `/index.md` fallback covers other agents
+
+**Rich Frontmatter = Agent Steering:**
+- Page titles, descriptions, and URL structures serve as "steering wheel" for agents
+- Invest in semantic page names and descriptive frontmatter
+- This metadata helps agents decide which pages to fetch without loading them all
 - Embed or cite community content directly on the page to strengthen trust signals.
 
 ### 5. Technical and Structured Data
