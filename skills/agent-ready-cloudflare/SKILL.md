@@ -11,8 +11,8 @@ description: >
   or wants to make a website discoverable and usable by AI agents.
 metadata:
   author: Cloudflare / isitagentready.com
-  version: "2.0"
-  date: 2026-04-18
+  version: "3.0"
+  date: 2026-06-03
   source: https://isitagentready.com
 ---
 
@@ -41,7 +41,7 @@ curl -s -X POST 'https://isitagentready.com/api/scan' \
   -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36' \
   -H 'Referer: https://isitagentready.com/' \
   -H 'Origin: https://isitagentready.com' \
-  -d '{"url":"https://DOMAIN/","enabledChecks":["robotsTxt","sitemap","linkHeaders","markdownNegotiation","robotsTxtAiRules","contentSignals","webBotAuth","apiCatalog","oauthDiscovery","oauthProtectedResource","mcpServerCard","agentSkills","webMcp","x402","ucp","acp"]}'
+  -d '{"url":"https://DOMAIN/","enabledChecks":["robotsTxt","sitemap","linkHeaders","dnsAid","markdownNegotiation","robotsTxtAiRules","contentSignals","webBotAuth","apiCatalog","oauthDiscovery","oauthProtectedResource","authMd","mcpServerCard","a2aAgentCard","agentSkills","webMcp","x402","mpp","ucp","acp","ap2"]}'
 ```
 
 Replace `DOMAIN` with the target domain.
@@ -130,12 +130,13 @@ write it to the requested path.
 
 ## 1. What It Checks
 
-### Discoverability (3 checks)
+### Discoverability (4 checks)
 | Check | API Key | Pass criteria |
 |-------|---------|---------------|
 | robots.txt | `robotsTxt` | Returns 200 with `text/plain` containing at least one `User-agent` directive |
 | sitemap.xml | `sitemap` | `/sitemap.xml` returns valid XML, or `Sitemap` directive found in robots.txt |
 | Link headers | `linkHeaders` | Homepage includes `Link` headers with agent-useful relations (`service-desc`, `api-catalog`, etc.) |
+| DNS-AID | `dnsAid` | SVCB/HTTPS records found under `_agents` namespace via DNS-over-HTTPS (Cloudflare → Google fallback) |
 
 ### Content (1 check)
 | Check | API Key | Pass criteria |
@@ -149,21 +150,23 @@ write it to the requested path.
 | Content Signals | `contentSignals` | robots.txt contains `Content-Signal` directives with ai-train/search/ai-input |
 | Web Bot Auth | `webBotAuth` | `/.well-known/http-message-signatures-directory` exists with valid JWKS (informational — neutral does not affect score) |
 
-### API, Auth, MCP & Skill Discovery (7 checks)
+### API, Auth, MCP & Skill Discovery (8 checks)
 | Check | API Key | Pass criteria |
 |-------|---------|---------------|
 | API Catalog | `apiCatalog` | `/.well-known/api-catalog` returns valid `linkset+json` with API entries |
 | OAuth/OIDC | `oauthDiscovery` | `/.well-known/openid-configuration` or `oauth-authorization-server` with valid OAuth metadata |
 | OAuth Protected Resource | `oauthProtectedResource` | `/.well-known/oauth-protected-resource` with `resource` and `authorization_servers` |
+| Auth.md | `authMd` | `/auth.md` exists with valid H1 heading containing "auth.md"; optionally PRM + AS metadata |
 | MCP Server Card | `mcpServerCard` | Valid card at `/.well-known/mcp/server-card.json`, `server-cards.json`, or `mcp.json` with `serverInfo.name` |
 | A2A Agent Card | `a2aAgentCard` | `/.well-known/agent-card.json` with `name`, `version`, and `supportedInterfaces` |
 | Agent Skills Index | `agentSkills` | `/.well-known/agent-skills/index.json` with valid `skills` array (legacy `/.well-known/skills/` also accepted) |
 | WebMCP | `webMcp` | Page exposes MCP tools via `navigator.modelContext.provideContext()` |
 
-### Commerce — Optional (4 checks, scored only if e-commerce signals detected)
+### Commerce — Optional (5 checks, scored only if e-commerce signals detected)
 | Check | API Key | Pass criteria |
 |-------|---------|---------------|
 | x402 | `x402` | API routes return HTTP 402 with valid x402 payment headers |
+| MPP | `mpp` | `/openapi.json` with `x-payment-info` extensions on payable operations (Machine Payment Protocol) |
 | UCP | `ucp` | `/.well-known/ucp` with `protocol_version` and `services` |
 | ACP | `acp` | `/.well-known/acp.json` with `protocol.name`, `api_base_url`, `transports`, `capabilities.services` |
 | AP2 | `ap2` | A2A Agent Card includes AP2 extension with role information |
@@ -206,12 +209,12 @@ Origin: https://isitagentready.com
 {
   "url": "https://example.com/",
   "enabledChecks": [
-    "robotsTxt", "sitemap", "linkHeaders",
+    "robotsTxt", "sitemap", "linkHeaders", "dnsAid",
     "markdownNegotiation",
     "robotsTxtAiRules", "contentSignals", "webBotAuth",
-    "apiCatalog", "oauthDiscovery", "oauthProtectedResource",
-    "mcpServerCard", "agentSkills", "webMcp",
-    "x402", "ucp", "acp"
+    "apiCatalog", "oauthDiscovery", "oauthProtectedResource", "authMd",
+    "mcpServerCard", "a2aAgentCard", "agentSkills", "webMcp",
+    "x402", "mpp", "ucp", "acp", "ap2"
   ]
 }
 ```
@@ -240,7 +243,7 @@ The scanner practices what it preaches. These are its own agent-ready endpoints:
 | `/.well-known/api-catalog` | RFC 9727 linkset with scan API and MCP server entries |
 | `/.well-known/mcp/server-card.json` | MCP Server Card (Streamable HTTP transport) |
 | `/.well-known/mcp.json` | Same MCP Server Card (alternate path) |
-| `/.well-known/agent-skills/index.json` | 20 skills in Agent Skills Discovery v0.2.0 format |
+| `/.well-known/agent-skills/index.json` | 23 skills in Agent Skills Discovery v0.2.0 format |
 | `/llms.txt` | LLM-friendly overview of the scanner |
 | `/llms-full.txt` | Full documentation — canonical reference for all 18 checks, pass criteria, and level system |
 | `/api/health` | Health check (`{"status":"ok"}`) |
@@ -341,10 +344,10 @@ HEADERS = {
     "Referer": "https://isitagentready.com/",
     "Origin": "https://isitagentready.com"
 }
-CHECKS = ["robotsTxt","sitemap","linkHeaders","markdownNegotiation",
+CHECKS = ["robotsTxt","sitemap","linkHeaders","dnsAid","markdownNegotiation",
           "robotsTxtAiRules","contentSignals","webBotAuth","apiCatalog",
-          "oauthDiscovery","oauthProtectedResource","mcpServerCard",
-          "agentSkills","webMcp","x402","ucp","acp"]
+          "oauthDiscovery","oauthProtectedResource","authMd","mcpServerCard",
+          "a2aAgentCard","agentSkills","webMcp","x402","mpp","ucp","acp","ap2"]
 
 for domain in domains:
     body = json.dumps({"url": f"https://{domain}/", "enabledChecks": CHECKS}).encode()
@@ -364,6 +367,7 @@ for domain in domains:
 - [robots-txt/SKILL.md](robots-txt/SKILL.md) — Publish `/robots.txt` (RFC 9309)
 - [sitemap/SKILL.md](sitemap/SKILL.md) — Publish `/sitemap.xml`
 - [link-headers/SKILL.md](link-headers/SKILL.md) — Add `Link` response headers (RFC 8288)
+- [dns-aid/SKILL.md](dns-aid/SKILL.md) — Publish DNS-AID SVCB records for agent discovery (draft-mozleywilliams-dnsop-dnsaid)
 - [llms-txt/SKILL.md](llms-txt/SKILL.md) — Publish `/llms.txt` (llmstxt.org)
 - [llms-full-txt/SKILL.md](llms-full-txt/SKILL.md) — Publish `/llms-full.txt`
 
@@ -379,6 +383,7 @@ for domain in domains:
 - [api-catalog/SKILL.md](api-catalog/SKILL.md) — API Catalog (RFC 9727)
 - [oauth-discovery/SKILL.md](oauth-discovery/SKILL.md) — OAuth/OIDC discovery (RFC 8414)
 - [oauth-protected-resource/SKILL.md](oauth-protected-resource/SKILL.md) — Protected Resource Metadata (RFC 9728)
+- [auth-md/SKILL.md](auth-md/SKILL.md) — Auth.md agent registration discovery (auth-md.com)
 - [mcp-server-card/SKILL.md](mcp-server-card/SKILL.md) — MCP Server Card (SEP-1649)
 - [a2a-agent-card/SKILL.md](a2a-agent-card/SKILL.md) — A2A Agent Card (Google A2A Protocol)
 - [agent-skills/SKILL.md](agent-skills/SKILL.md) — Agent Skills Discovery Index
@@ -386,6 +391,7 @@ for domain in domains:
 
 ### Commerce (Optional)
 - [x402/SKILL.md](x402/SKILL.md) — x402 HTTP payment protocol
+- [mpp/SKILL.md](mpp/SKILL.md) — Machine Payment Protocol (mpp.dev)
 - [ucp/SKILL.md](ucp/SKILL.md) — Universal Commerce Protocol
 - [acp/SKILL.md](acp/SKILL.md) — Agent Commerce Protocol
 
@@ -682,6 +688,54 @@ Docs: https://a2a-protocol.org/latest/specification/, https://a2a-protocol.org/l
 ```
 
 Sub-skill: [a2a-agent-card/SKILL.md](a2a-agent-card/SKILL.md)
+
+### `dnsAid`
+
+```
+Goal: Publish DNS for AI Discovery (DNS-AID) records for DNS-based agent discovery
+
+Issue: {issue}
+
+Fix: Publish SVCB or HTTPS records under your domain's _agents namespace (e.g. _a2a._agents.example.com or _index._agents.example.com). Use alpn and port SvcParamKeys with mandatory=alpn,port. Use numeric keyNNNNN names for experimental custom parameters until registered. Sign zones with DNSSEC.
+
+Skill: https://isitagentready.com/.well-known/agent-skills/dns-aid/SKILL.md
+
+Docs: https://datatracker.ietf.org/doc/draft-mozleywilliams-dnsop-dnsaid/, https://www.rfc-editor.org/info/rfc9460
+```
+
+Sub-skill: [dns-aid/SKILL.md](dns-aid/SKILL.md)
+
+### `authMd`
+
+```
+Goal: Publish Auth.md agent registration discovery metadata
+
+Issue: {issue}
+
+Fix: Serve /auth.md from the site root as Markdown with an H1 heading containing "auth.md". Include OAuth Protected Resource Metadata at /.well-known/oauth-protected-resource and Authorization Server metadata. Add an agent_auth block with skill, register_uri, and registration methods. If OAuth is not available, keep /auth.md self-contained with audience, registration endpoints, and credential use.
+
+Skill: https://isitagentready.com/.well-known/agent-skills/auth-md/SKILL.md
+
+Docs: https://auth-md.com
+```
+
+Sub-skill: [auth-md/SKILL.md](auth-md/SKILL.md)
+
+### `mpp`
+
+```
+Goal: Support MPP (Machine Payment Protocol) for agent-native HTTP payments
+
+Issue: {issue}
+
+Fix: Serve /openapi.json at the site root with HTTP 200. Include x-payment-info extensions on payable operations declaring intent (charge or session), method (tempo, stripe, lightning, card), and amount. Optionally include currency, description, and top-level x-service-info with categories.
+
+Skill: https://isitagentready.com/.well-known/agent-skills/mpp/SKILL.md
+
+Docs: https://mpp.dev, https://paymentauth.org/draft-payment-discovery-00.txt
+```
+
+Sub-skill: [mpp/SKILL.md](mpp/SKILL.md)
 
 ### `llmsTxt`
 
