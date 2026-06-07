@@ -163,6 +163,25 @@ Automated iterative agent runner for spec-based development in [Kiro](https://ki
 
 ---
 
+### ✍️ Humanizar — AI Text Humanizer for Brazilian Portuguese
+Rewrites Brazilian Portuguese text to sound human, natural, and undetectable by AI detection tools. Removes AI slop patterns, restores semantic entropy, and injects voice and personality. Born from the English `humanizer` skill but evolved into something far more complete — with 55+ patterns specific to PT-BR that no other source has cataloged.
+
+**Origin story:** I started from the English [humanizer](https://github.com/blader/humanizer) skill by [@blader](https://github.com/blader) (based on Wikipedia's "Signs of AI writing"), researched what makes AI text detectable specifically in Brazilian Portuguese, discovered there was *zero* consolidated material on PT-BR AI patterns, cataloged 55+ patterns from scratch (including 10 exclusive to Brazilian Portuguese like gerundismo, officialese, and ENEM-style hedging), incorporated the [tropes.fyi](https://tropes.fyi) directory and the concept of [semantic ablation](https://www.theregister.com/2026/02/16/semantic_ablation_ai_writing/) (The Register, 2026), and built a skill that doesn't just remove bad patterns — it restores the entropy that AI strips away.
+
+**Why it's better for PT-BR than the original:**
+- 55+ patterns vs 25 (including 10 that only exist in Brazilian Portuguese)
+- Semantic entropy restoration with explicit alerts (not just removal)
+- 6 voice presets calibrated for Brazilian contexts (crônica, journalistic, academic, corporate, social media, WhatsApp)
+- Examples are culturally Brazilian, not translations from English
+- Preserves naturalized foreign words (feedback, deploy, churn) — fighting linguistic purism is itself a humanization signal
+- Uses the Brazilian *crônica* literary tradition as the gold standard for natural writing
+
+**When to use:** humanize PT-BR text, remove AI slop, rewrite with voice, fix generic/bureaucratic tone, review text from another agent, "tirar cara de IA", "dar vida ao texto".
+
+📄 [View full documentation](skills/humanizar/SKILL.md)
+
+---
+
 ### 🔐 auth.md — Agent Authentication Protocol
 Generates, validates, and explains [auth.md](https://auth-md.com) files — the open protocol that lets AI agents register for services on behalf of users without signup forms. Supports the Agent Verified flow (ID-JAG identity assertions via trusted providers like OpenAI, Anthropic, Cursor) and the User Claimed flow (OTP-based registration with anonymous start or email required entrypoints). Extends RFC 9728 (Protected Resource Metadata) with CIMD support.
 
@@ -219,6 +238,7 @@ npx skills add https://github.com/fabriciotelles/skills -s resume-ats-beater
 npx skills add https://github.com/fabriciotelles/skills -s coolify-operator
 npx skills add https://github.com/fabriciotelles/skills -s agent-ready-cloudflare
 npx skills add https://github.com/fabriciotelles/skills -s ralph-loop-kiro-specs
+npx skills add https://github.com/fabriciotelles/skills -s humanizar
 npx skills add https://github.com/fabriciotelles/skills -s auth-md
 npx skills add https://github.com/fabriciotelles/skills -s website-spec
 ```
@@ -261,6 +281,7 @@ cp -r skills/resume-ats-beater .cursor/skills/
 cp -r skills/coolify-operator .cursor/skills/
 cp -r skills/agent-ready-cloudflare .cursor/skills/
 cp -r skills/ralph-loop-kiro-specs .cursor/skills/
+cp -r skills/humanizar .cursor/skills/
 cp -r skills/auth-md .cursor/skills/
 cp -r skills/website-spec .cursor/skills/
 
@@ -275,6 +296,7 @@ cp -r skills/resume-ats-beater .claude/skills/
 cp -r skills/coolify-operator .claude/skills/
 cp -r skills/agent-ready-cloudflare .claude/skills/
 cp -r skills/ralph-loop-kiro-specs .claude/skills/
+cp -r skills/humanizar .claude/skills/
 cp -r skills/auth-md .claude/skills/
 cp -r skills/website-spec .claude/skills/
 
@@ -289,6 +311,7 @@ cp -r skills/resume-ats-beater .kiro/skills/
 cp -r skills/coolify-operator .kiro/skills/
 cp -r skills/agent-ready-cloudflare .kiro/skills/
 cp -r skills/ralph-loop-kiro-specs .kiro/skills/
+cp -r skills/humanizar .kiro/skills/
 cp -r skills/auth-md .kiro/skills/
 cp -r skills/website-spec .kiro/skills/
 ```
@@ -332,6 +355,9 @@ skills/
 │   ├── SKILL.md
 │   ├── scripts/           # bash loop runner script
 │   └── references/        # Ralph agent prompt template
+├── humanizar/
+│   ├── SKILL.md
+│   └── references/        # 55+ AI patterns specific to Brazilian Portuguese (6 files)
 ├── auth-md/
 │   ├── SKILL.md
 │   └── references/        # protocol template, validation rules, metadata schema, example, implementation guide

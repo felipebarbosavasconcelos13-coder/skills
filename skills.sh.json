@@ -12,6 +12,13 @@
       ]
     },
     {
+      "title": "Writing & Humanization",
+      "description": "Remove AI slop, restore natural voice, and humanize text for Brazilian Portuguese.",
+      "skills": [
+        "humanizar"
+      ]
+    },
+    {
       "title": "DevOps & Cloud",
       "description": "Deployment platforms and cloud API management.",
       "skills": [

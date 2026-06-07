@@ -160,6 +160,25 @@ Runner iterativo automatizado para desenvolvimento baseado em specs no [Kiro](ht
 
 ---
 
+### ✍️ Humanizar — Humanizador de Texto IA para Português Brasileiro
+Reescreve texto em português brasileiro para soar humano, natural e indetectável por ferramentas de IA. Remove padrões de AI slop, restaura entropia semântica e injeta voz e personalidade. Nasceu da skill `humanizer` em inglês mas evoluiu para algo muito mais completo — com 55+ padrões específicos do PT-BR que nenhuma outra fonte catalogou.
+
+**Como nasceu:** Parti da skill [humanizer](https://github.com/blader/humanizer) em inglês por [@blader](https://github.com/blader) (baseada no artigo da Wikipedia "Signs of AI writing"), pesquisei o que torna texto de IA detectável especificamente em português brasileiro, descobri que existia *zero* material consolidado sobre padrões de IA em PT-BR, cataloguei 55+ padrões do zero (incluindo 10 exclusivos do português brasileiro como gerundismo, officialese e hedging estilo ENEM), incorporei o diretório [tropes.fyi](https://tropes.fyi) e o conceito de [ablação semântica](https://www.theregister.com/2026/02/16/semantic_ablation_ai_writing/) (The Register, 2026), e construí uma skill que não apenas remove padrões ruins — restaura a entropia que a IA arrancou.
+
+**Por que é melhor para PT-BR que a original:**
+- 55+ padrões vs 25 (incluindo 10 que só existem em português brasileiro)
+- Restauração de entropia semântica com alertas explícitos (não só remoção)
+- 6 presets de voz calibrados para contextos brasileiros (crônica, jornalístico, acadêmico, corporativo, rede social, WhatsApp)
+- Exemplos culturalmente brasileiros, não traduções do inglês
+- Preserva estrangeirismos naturalizados (feedback, deploy, churn) — combater purismo linguístico é em si um sinal de humanização
+- Usa a tradição literária da *crônica* brasileira como padrão-ouro de escrita natural
+
+**Quando usar:** humanizar texto PT-BR, remover AI slop, reescrever com voz, corrigir tom genérico/burocrático, revisar texto de outro agente, "tirar cara de IA", "dar vida ao texto".
+
+📄 [Ver documentação completa](skills/humanizar/SKILL.md)
+
+---
+
 ### 🔐 auth.md — Protocolo de Autenticação para Agentes
 Gera, valida e explica arquivos [auth.md](https://auth-md.com) — o protocolo aberto que permite agentes de IA registrarem-se em serviços em nome de usuários sem formulários de signup. Suporta o fluxo Agent Verified (assertions de identidade ID-JAG via providers confiáveis como OpenAI, Anthropic, Cursor) e o fluxo User Claimed (registro baseado em OTP com entrypoints anonymous start ou email required). Estende o RFC 9728 (Protected Resource Metadata) com suporte a CIMD.
 
@@ -218,6 +237,7 @@ npx skills add https://github.com/fabriciotelles/skills -s resume-ats-beater
 npx skills add https://github.com/fabriciotelles/skills -s coolify-operator
 npx skills add https://github.com/fabriciotelles/skills -s agent-ready-cloudflare
 npx skills add https://github.com/fabriciotelles/skills -s ralph-loop-kiro-specs
+npx skills add https://github.com/fabriciotelles/skills -s humanizar
 npx skills add https://github.com/fabriciotelles/skills -s auth-md
 npx skills add https://github.com/fabriciotelles/skills -s website-spec
 ```
@@ -260,6 +280,7 @@ cp -r skills/resume-ats-beater .cursor/skills/
 cp -r skills/coolify-operator .cursor/skills/
 cp -r skills/agent-ready-cloudflare .cursor/skills/
 cp -r skills/ralph-loop-kiro-specs .cursor/skills/
+cp -r skills/humanizar .cursor/skills/
 cp -r skills/auth-md .cursor/skills/
 cp -r skills/website-spec .cursor/skills/
 
@@ -274,6 +295,7 @@ cp -r skills/resume-ats-beater .claude/skills/
 cp -r skills/coolify-operator .claude/skills/
 cp -r skills/agent-ready-cloudflare .claude/skills/
 cp -r skills/ralph-loop-kiro-specs .claude/skills/
+cp -r skills/humanizar .claude/skills/
 cp -r skills/auth-md .claude/skills/
 cp -r skills/website-spec .claude/skills/
 
@@ -288,6 +310,7 @@ cp -r skills/resume-ats-beater .kiro/skills/
 cp -r skills/coolify-operator .kiro/skills/
 cp -r skills/agent-ready-cloudflare .kiro/skills/
 cp -r skills/ralph-loop-kiro-specs .kiro/skills/
+cp -r skills/humanizar .kiro/skills/
 cp -r skills/auth-md .kiro/skills/
 cp -r skills/website-spec .kiro/skills/
 ```
@@ -331,6 +354,9 @@ skills/
 │   ├── SKILL.md
 │   ├── scripts/           # script bash do loop runner
 │   └── references/        # template do prompt do agente Ralph
+├── humanizar/
+│   ├── SKILL.md
+│   └── references/        # 55+ padrões de IA específicos do português brasileiro (6 arquivos)
 ├── auth-md/
 │   ├── SKILL.md
 │   └── references/        # template do protocolo, regras de validação, schema de metadata, exemplo, guia de implementação
