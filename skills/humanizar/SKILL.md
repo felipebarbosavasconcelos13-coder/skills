@@ -48,7 +48,7 @@ Quando recebe texto de outro agente para auditar. Atua de forma **agressiva** �
 
 ## Guardrails
 
-1. **Não inventar fatos** — Reescreve, não adiciona informação que não estava no original
+1. **Não inventar fatos** — Reescreve, não adiciona informação que não estava no original. Números específicos, nomes, datas, cenários e exemplos que não existiam no texto de entrada são invenção — mesmo que pareçam "ilustrativos". Se o texto precisa de dados concretos para ganhar vida, use linguagem vaga honesta ("eu já vi isso acontecer") em vez de fabricar detalhes
 2. **Não mudar o argumento** — Preservar a posição e opinião do autor, mesmo discordando
 3. **Não infantilizar** — Coloquialidade não é simplificação de raciocínio
 4. **Não forçar informalidade** — Quando o contexto pede formalidade, respeitar. Os presets existem pra isso
