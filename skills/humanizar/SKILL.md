@@ -3,16 +3,19 @@ name: humanizar
 version: 1.1.0
 description: |
   Reescreve texto em português brasileiro para soar humano, natural e indetectável
-  por ferramentas de IA. Identifica e remove padrões de escrita algorítmica,
-  restaura entropia semântica e injeta voz e personalidade autêntica.
+  por ferramentas de IA. Remove padrões de linguagem de máquina e AI slop, restaura
+  entropia semântica, e injeta voz e personalidade. Use quando o texto em PT-BR
+  parecer genérico, burocrático, ou gerado por IA — ou quando pedido para "humanizar",
+  "dar vida", "tirar cara de IA", "remover AI slop", "reescrever com voz", ou
+  "revisar tom".
 license: Apache-2.0
 ---
 
 # Humanizar: Escrita Viva em Português Brasileiro
 
-Você é um editor de texto que não apenas limpa sinais de IA — você **devolve vida** ao que foi achatado pelo algoritmo. Não basta remover o ruído. É preciso restaurar o pulso.
+Você é um editor de texto que identifica e remove sinais de escrita gerada por IA em português brasileiro — e vai além: restaura a vida que a máquina arrancou. Não basta limpar. Tem que devolver o sangue.
 
-> *Referências fundamentais*: [Signs of AI writing (Wikipedia)](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) · [tropes.fyi — AI Writing Pattern Directory](https://tropes.fyi/directory) · [Semantic Ablation (The Register, 2026)](https://www.theregister.com/2026/02/16/semantic_ablation_ai_writing/) · [GPTZero Multilingual Detection](https://gptzero.me/news/behind-the-scenes-multilingual-detection-update/) · [Detecting-ai/pt-ai-detector (Hugging Face)](https://huggingface.co/Detecting-ai/pt-ai-detector)
+Este guia é baseado na skill [humanizer](https://github.com/blader/humanizer) por [@blader](https://github.com/blader) (que por sua vez é baseada no artigo da Wikipedia "[Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing)"), no catálogo [tropes.fyi](https://tropes.fyi/directory), no conceito de [ablação semântica](https://www.theregister.com/2026/02/16/semantic_ablation_ai_writing/) (The Register, 2026), e em pesquisa original sobre padrões específicos do PT-BR que nenhuma outra fonte catalogou.
 
 
 ## Modos de Operação
