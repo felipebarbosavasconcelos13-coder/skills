@@ -457,3 +457,62 @@ npx astro check
 | `experimental.rustCompiler` | (remove) |
 | `experimental.queuedRendering` | (remove) |
 | `experimental.advancedRouting` | (remove) |
+
+---
+
+## Ecosystem Compatibility (learned from real upgrades)
+
+### Starlight 0.40+ Sidebar Schema Change
+
+Starlight 0.40 (required for Astro v7) changed the sidebar schema. `autogenerate` can no longer be a direct property of a sidebar group — it must be inside `items`:
+
+```javascript
+// BEFORE (Starlight 0.38):
+{ label: 'Reference', autogenerate: { directory: 'reference' } }
+
+// AFTER (Starlight 0.40):
+{ label: 'Reference', items: [{ autogenerate: { directory: 'reference' } }] }
+```
+
+### astro-mermaid — Incompatible with v7
+
+`astro-mermaid` (all versions through 2.0.4) uses `isUnifiedProcessor()` which was removed in Astro v7. Replace with Mermaid CDN client-side script:
+
+```javascript
+// In Starlight head config or Layout.astro:
+{
+  tag: 'script',
+  attrs: { type: 'module' },
+  content: `
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: false });
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('pre > code.language-mermaid').forEach((el) => {
+        const pre = el.parentElement;
+        const div = document.createElement('div');
+        div.className = 'mermaid';
+        div.textContent = el.textContent;
+        pre.replaceWith(div);
+      });
+      mermaid.run();
+    });
+  `,
+}
+```
+
+### Docker Alpine — Sätteri native binding missing
+
+Sätteri only ships `linux-x64-gnu` (glibc). Alpine uses musl. Build stage MUST use `node:22-slim`:
+
+```dockerfile
+FROM node:22-slim AS build  # NOT alpine
+```
+
+### .npmrc required in Dockerfile
+
+Astro v7 with Starlight plugins causes peer dependency conflicts. The `.npmrc` with `legacy-peer-deps=true` must be copied into Docker:
+
+```dockerfile
+COPY package*.json .npmrc ./
+RUN npm ci
+```

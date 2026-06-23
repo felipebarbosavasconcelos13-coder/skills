@@ -178,6 +178,12 @@ export default defineConfig({
 });
 ```
 
+### Docker Deployment Note
+
+Sätteri ships native bindings only for **glibc** (`@bruits/satteri-linux-x64-gnu`). Alpine Linux uses musl — there is no musl binding. Docker build stages MUST use `node:22-slim` (Debian/glibc), not `node:22-alpine`. This affects all Astro v7 projects using Sätteri (the default), including Starlight sites.
+
+Projects using `unified()` explicitly are NOT affected (they bypass Sätteri entirely).
+
 ---
 
 ## 4. Queued Rendering

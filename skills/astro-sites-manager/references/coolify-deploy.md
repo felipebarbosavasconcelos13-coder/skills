@@ -16,12 +16,15 @@ Production-tested patterns for deploying Astro sites on self-hosted Coolify (v4.
 
 **Rule:** For Astro v6+ and v7, always use `dockerfile`. Nixpacks resolves Node 22.11.0 from its internal nixpkgs archive, but Astro v6+ requires ≥22.12.0.
 
+**Astro v7 Docker base image rule:** Use `node:22-slim` (Debian/glibc) for the build stage, NOT `node:22-alpine`. Sätteri's native binding only supports glibc. The runtime stage can still use Alpine/Caddy since it only serves files.
+
 ---
 
 ## Dockerfile — Astro SSR (Node Adapter)
 
 ```dockerfile
-FROM node:22-alpine AS build
+# Use node:22-slim (NOT alpine) — Sätteri needs glibc for Astro v7
+FROM node:22-slim AS build
 WORKDIR /app
 ENV NODE_OPTIONS="--max-old-space-size=512"
 
@@ -31,7 +34,7 @@ ARG PUBLIC_SITE_URL
 ENV MY_API_KEY=$MY_API_KEY
 ENV PUBLIC_SITE_URL=$PUBLIC_SITE_URL
 
-COPY package*.json ./
+COPY package*.json .npmrc ./
 RUN npm ci
 COPY . .
 RUN npm run build
@@ -50,10 +53,11 @@ CMD ["node", "dist/server/entry.mjs"]
 ## Dockerfile — Astro Static (nginx)
 
 ```dockerfile
-FROM node:22-alpine AS build
+# Use node:22-slim (NOT alpine) — Sätteri needs glibc
+FROM node:22-slim AS build
 WORKDIR /app
 ENV NODE_OPTIONS="--max-old-space-size=512"
-COPY package*.json ./
+COPY package*.json .npmrc ./
 RUN npm ci
 COPY . .
 RUN npm run build
@@ -107,6 +111,58 @@ Node.js v22.11.0 is not supported by Astro!
 Nixpacks downloads ~600MB nixpkgs archive during build. On servers with limited bandwidth, build dies silently during `unpacking` step.
 
 **Fix:** Switch to Dockerfile. `node:22-alpine` is ~50MB vs ~600MB.
+
+### Sätteri Native Binding on Alpine (Astro v7)
+
+Astro v7 uses Sätteri (Rust-based Markdown) by default. Sätteri ships native bindings but **only for glibc** (`@bruits/satteri-linux-x64-gnu`). Alpine uses musl libc — no musl binding exists, and the WASM fallback has a cpu platform check that also fails.
+
+```
+Cannot find module '@bruits/satteri-linux-x64-musl'
+```
+
+**Fix:** Use `node:22-slim` (Debian/glibc) for the build stage. The runtime stage can still use Alpine since it only serves static files:
+
+```dockerfile
+FROM node:22-slim AS build    # glibc — satteri works
+WORKDIR /app
+COPY package*.json .npmrc ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM caddy:2-alpine           # runtime doesn't need Node
+COPY --from=build /app/dist /srv
+```
+
+**Affected projects:** Any Astro v7 project using Sätteri (default) or Starlight 0.40+ on Alpine.
+**Not affected:** Projects using `unified()` processor explicitly (they bypass Sätteri).
+
+### legacy-peer-deps and npm ci in Docker
+
+When using `--legacy-peer-deps` locally (required for Astro v7 due to transient peer dep conflicts in Starlight plugins), Docker's `npm ci` will fail unless the `.npmrc` is copied into the container.
+
+**Fix:** Always copy `.npmrc` before `npm ci`:
+
+```dockerfile
+COPY package*.json .npmrc ./
+RUN npm ci
+```
+
+The `.npmrc` must contain:
+```
+legacy-peer-deps=true
+```
+
+### package-lock.json Desync After Major Upgrade
+
+After `npm install --legacy-peer-deps` for a major version upgrade, the lockfile may reference packages that `npm ci` (strict mode) cannot resolve. Symptoms: `npm ci` fails with "lock file's X does not satisfy Y".
+
+**Fix:** Delete lockfile and regenerate:
+```bash
+rm package-lock.json node_modules -rf
+npm install --legacy-peer-deps
+# Then test: npm ci must pass
+```
 
 ---
 
