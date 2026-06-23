@@ -70,6 +70,11 @@
       "source": "/home/fabricio/GIT/skills",
       "sourceType": "local",
       "computedHash": "063bfa6216a3dac71a0c87de2e95590f69a1e6fd74d589fc662f83e96b4e920d"
+    },
+    "astro-sites-manager": {
+      "source": "/home/fabricio/GIT/skills",
+      "sourceType": "local",
+      "computedHash": "23f0eab966c4a72caa88655e95d8fc8755fc0534e347d5882bf1aaf1fe0e4548"
     }
   }
 }

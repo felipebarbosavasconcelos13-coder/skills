@@ -228,6 +228,21 @@ Audits websites for compliance with Brazil's LGPD (Lei 13.709/2018).
 
 ---
 
+### 🚀 Astro Sites Manager
+Comprehensive skill for building, migrating, and maintaining Astro v7 projects. Covers the full lifecycle: best practices, v6→v7 migration with structured plan, validation of breaking/deprecated patterns, AI-enhanced dev server (background mode, JSON logging), advanced routing with src/fetch.ts, route caching, Sätteri Markdown, Rust compiler, Starlight docs, Pagefind search, SEO, testing, and deployment to 8+ platforms including Coolify.
+
+**When to use:** build Astro sites, upgrade to v7, deploy on Coolify/Vercel/Netlify/Cloudflare, validate breaking changes, configure Starlight docs, set up Pagefind search, use background dev server as AI agent, configure route caching.
+
+**Key features:**
+- MCP Astro Docs integration (real-time docs access)
+- 10 reference files covering migration, validation, testing, deployment, Starlight, and more
+- Coolify-specific deployment guide with 17-project battle-tested patterns
+- Feature detection: v7 features activate only when available (safe on v6)
+
+📄 [View full documentation](skills/astro-sites-manager/SKILL.md)
+
+---
+
 > **Skills revised in March 2026** following the Anthropic standard for Agent Skills structure and quality.
 > Source: [Improving Skill Creator: Test, Measure and Refine Agent Skills](https://claude.com/blog/improving-skill-creator-test-measure-and-refine-agent-skills)
 
@@ -257,6 +272,7 @@ npx skills add https://github.com/fabricioctelles/skills -s ralph-loop-kiro-spec
 npx skills add https://github.com/fabricioctelles/skills -s humanizar
 npx skills add https://github.com/fabricioctelles/skills -s auth-md
 npx skills add https://github.com/fabricioctelles/skills -s website-spec
+npx skills add https://github.com/fabricioctelles/skills -s astro-sites-manager
 ```
 
 ### Via [Agent Skills CLI](https://www.agentskills.in/docs)
@@ -300,6 +316,7 @@ cp -r skills/ralph-loop-kiro-specs .cursor/skills/
 cp -r skills/humanizar .cursor/skills/
 cp -r skills/auth-md .cursor/skills/
 cp -r skills/website-spec .cursor/skills/
+cp -r skills/astro-sites-manager .cursor/skills/
 
 # Example for Claude Code
 cp -r skills/premium-proposal-builder .claude/skills/
@@ -315,6 +332,7 @@ cp -r skills/ralph-loop-kiro-specs .claude/skills/
 cp -r skills/humanizar .claude/skills/
 cp -r skills/auth-md .claude/skills/
 cp -r skills/website-spec .claude/skills/
+cp -r skills/astro-sites-manager .claude/skills/
 
 # Example for Kiro
 cp -r skills/premium-proposal-builder .kiro/skills/
@@ -330,6 +348,7 @@ cp -r skills/ralph-loop-kiro-specs .kiro/skills/
 cp -r skills/humanizar .kiro/skills/
 cp -r skills/auth-md .kiro/skills/
 cp -r skills/website-spec .kiro/skills/
+cp -r skills/astro-sites-manager .kiro/skills/
 ```
 
 The Agent Skills format is universal and works with any compatible agent. See the [official specification](https://agentskills.io/specification.md) for details.

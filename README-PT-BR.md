@@ -227,6 +227,21 @@ Audita websites para conformidade com a LGPD brasileira (Lei 13.709/2018). Valid
 
 ---
 
+### 🚀 Astro Sites Manager
+Skill completa para construir, migrar e manter projetos Astro v7. Cobre o ciclo completo: boas práticas, migração v6→v7 com plano estruturado, validação de breaking/deprecated patterns, dev server com AI (background mode, JSON logging), advanced routing com src/fetch.ts, route caching, Sätteri Markdown, compilador Rust, Starlight docs, Pagefind search, SEO, testes e deploy em 8+ plataformas incluindo Coolify.
+
+**Quando usar:** construir sites Astro, atualizar para v7, deploy no Coolify/Vercel/Netlify/Cloudflare, validar breaking changes, configurar Starlight docs, configurar Pagefind search, usar background dev server como agente IA, configurar route caching.
+
+**Destaques:**
+- Integração com MCP Astro Docs (acesso à documentação em tempo real)
+- 10 arquivos de referência cobrindo migração, validação, testes, deploy, Starlight e mais
+- Guia de deploy no Coolify battle-tested com padrões de 17 projetos em produção
+- Feature detection: features v7 ativam só quando disponíveis (seguro no v6)
+
+📄 [Ver documentação completa](skills/astro-sites-manager/SKILL.md)
+
+---
+
 > **Skills revisadas em março de 2026** seguindo o padrão Anthropic para estrutura e qualidade de Agent Skills.
 > Fonte: [Improving Skill Creator: Test, Measure and Refine Agent Skills](https://claude.com/blog/improving-skill-creator-test-measure-and-refine-agent-skills)
 
