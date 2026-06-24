@@ -81,7 +81,7 @@ Write to: `<scan-dir>/report.json`
 
 ## Step 4: Generate HTML Report
 
-The human-readable report is a **self-contained HTML file** (`security-report.html`). Follow the template in `references/report-format.md`.
+The human-readable report is a **self-contained HTML file** (`security-report.html`). Follow the template in `references/report-format.md` **exactly** — it is a prescriptive spec, not a suggestion.
 
 Key features:
 - Dark theme, color-coded severity badges
@@ -90,9 +90,12 @@ Key features:
 - CVE analysis table with exploitability cross-reference
 - Pentest results with all tests numbered (P1, P2...)
 - Negative results table (what was tested and passed)
+- **Footer with skill attribution** (mandatory — see template)
 - Zero external dependencies — opens offline
 
 Build the HTML by replacing `{{placeholders}}` in the template with actual data. Repeat blocks for each finding/CVE/test.
+
+**After generating the HTML, run the Report Compliance Checklist from SKILL.md against your output.** If any element is missing, fix it before proceeding.
 
 Write to: `<scan-dir>/security-report.html` (and also repo root for easy access)
 

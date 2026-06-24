@@ -63,20 +63,77 @@ They handle the boring-but-critical parts: persisting findings to SQLite, comput
 
 ## References
 
-Format specs and schemas live in `references/`. Check them before producing structured output — the schemas are strict and the report format is specific. Winging it means the pipeline breaks downstream.
+Format specs and schemas live in `references/`. **These are mandatory specifications, not guidelines.** Read the relevant reference file before producing any structured output and verify your output matches it element-by-element. In security work, omitting details (a footer, a section, a field) is equivalent to an incomplete deliverable.
 
-**Report output is HTML** (`security-report.html`) — a self-contained dark-themed file with color-coded severities, collapsible evidence, and interactive severity filters. No external dependencies. Opens in any browser. See `references/report-format.md` for the template.
+| File | What it governs | When to read |
+|---|---|---|
+| `references/report-format.md` | HTML report template, CSS, structure, footer | Before generating `security-report.html` |
+| `references/finding-format.md` | Finding card structure, required fields | Before recording any finding |
+| `references/severity-policy.md` | Severity classification rules | Before assigning any severity |
+| `references/scan-artifacts.md` | Scan directory structure, file naming | Before initializing a scan |
+
+**Report output is HTML** (`security-report.html`) — a self-contained dark-themed file with color-coded severities, collapsible evidence, and interactive severity filters. No external dependencies. Opens in any browser. The template in `references/report-format.md` includes a mandatory footer — ensure it is always present.
 
 ## Hard Rules
 
 These apply to every workflow. No exceptions.
 
-1. **Evidence or it didn't happen.** Every finding needs source location, data flow trace, and a concrete explanation of exploitability. "This looks dangerous" is not a finding.
-2. **Don't invent severity.** If you can't demonstrate impact, mark it as needs-investigation. Overcalling severity erodes trust faster than missing a bug.
-3. **Preserve scan state.** If a scan gets interrupted, the SQLite database holds progress. Never nuke it. A later run picks up where you left off.
-4. **Findings are immutable once sealed.** After a scan is finalized, findings are read-only. You can add notes, change triage status, track to external systems — but the original evidence record doesn't change.
-5. **Relative paths only.** All file references in findings use repo-relative paths. Never absolute paths.
-6. **CVE severity ≠ real severity.** Always cross-reference each CVE against the project's actual usage before assigning severity. See Lessons Learned below.
+1. **Respect the user's preferred language.** The report content (titles, descriptions, executive summary, remediation text, table headers) must be written in the user's language. Check `AGENTS.md`, `.clinerules`, or equivalent config in the target repo for language preference. If none is specified, use the language the user is speaking in the conversation. The HTML template structure (tag names, CSS classes, JS) stays as-is — only human-readable text is translated.
+2. **Evidence or it didn't happen.** Every finding needs source location, data flow trace, and a concrete explanation of exploitability. "This looks dangerous" is not a finding.
+3. **Don't invent severity.** If you can't demonstrate impact, mark it as needs-investigation. Overcalling severity erodes trust faster than missing a bug.
+4. **Preserve scan state.** If a scan gets interrupted, the SQLite database holds progress. Never nuke it. A later run picks up where you left off.
+5. **Findings are immutable once sealed.** After a scan is finalized, findings are read-only. You can add notes, change triage status, track to external systems — but the original evidence record doesn't change.
+6. **Relative paths only.** All file references in findings use repo-relative paths. Never absolute paths.
+7. **CVE severity ≠ real severity.** Always cross-reference each CVE against the project's actual usage before assigning severity. See Lessons Learned below.
+8. **Follow reference specs exactly.** Before generating any structured output (report, finding, JSON), read the matching file in `references/`. The templates are prescriptive, not suggestive. Every element in the template must appear in your output. Missing a footer or section means the report is incomplete.
+
+---
+
+## Report Compliance Checklist
+
+Before delivering `security-report.html`, verify ALL of the following against `references/report-format.md`. A report that skips any item is non-conformant and must be fixed before delivery.
+
+### Structure (must exist in this order)
+- [ ] `<title>` with repo name
+- [ ] Meta grid: Repository, Date, Target, Methodology
+- [ ] Summary cards (count per severity)
+- [ ] Executive summary paragraph
+- [ ] Filter buttons (Todos, Critical, High, Medium, Low, Info)
+- [ ] Finding cards — sorted by severity desc, each with:
+  - [ ] Severity badge
+  - [ ] Title
+  - [ ] File/line meta (`📁 <code>path:line</code>`)
+  - [ ] Description
+  - [ ] Collapsible evidence with `<pre><code>`
+  - [ ] Collapsible remediation
+- [ ] CVE analysis table (if dependencies have known advisories)
+- [ ] Pentest results section — every test numbered (P1, P2...) with command, response, pass/fail
+- [ ] Negative results table — what was tested and found secure
+- [ ] Remediation priority table
+- [ ] **Footer**: `Generated by security-specialist skill by github.com/fabriciotelles/skills`
+
+### Styling
+- [ ] Dark theme using CSS variables from the template
+- [ ] Color-coded severity badges (critical=red, high=orange, medium=yellow, low=green, info=gray)
+- [ ] Finding cards with colored left border matching severity
+- [ ] No external dependencies (no CDN, no fonts, no JS libs)
+- [ ] Works offline via `file://`
+
+### Content integrity
+- [ ] All tests performed appear in the report (positive AND negative)
+- [ ] Evidence is actual command output / HTTP responses, not paraphrased
+- [ ] CVE severities are cross-referenced against project context (never parrot `npm audit`)
+- [ ] Three-layer correlation table (localhost vs production) if both were tested
+- [ ] Dev-only findings explicitly marked, not inflating severity counts
+- [ ] Storage abuse tested on all POST endpoints that persist data
+
+### Self-check before delivery
+Run this mental verification:
+1. Open the template in `references/report-format.md`
+2. Walk through it section by section
+3. Confirm each section exists in your output
+4. Confirm the footer is present with the correct link
+5. If ANY section is missing → fix it before presenting to user
 
 ---
 
