@@ -237,21 +237,38 @@ Full-stack application security agent — performs SAST (static code analysis), 
 
 **Key features:**
 - **Input-driven SOP**: path only → SAST + dev DAST; path + URL → SAST + dev + prod; URL only → DAST
-- **11 steering workflows**: full-scan, diff-review, pentest, threat-model, attack-paths, discovery, triage, remediation, tracking, validation, reporting
-- **4 Python scripts**: scan database (SQLite), file ranker, report finalizer, pentest automation
+- **12 steering workflows**: full-scan, diff-review, pentest, hunting, threat-model, attack-paths, discovery, triage, remediation, tracking, validation, reporting
+- **6-phase pipeline** (full-scan): Recon → Hunt → Validate → Report → Schema → Verify — with parallel agents and adversarial validation
+- **9 attack classes**: Injection, Access Control, Resource/File, Cryptography, Business Logic, Feature Abuse, Chained Attacks, Wildcard, Obvious Things
+- **12-angle hunting methodology**: sad path, boundaries, component assumptions, wrong ordering, concurrency, parser disagreements, round-trip fidelity, config control, privilege tracing, leaked context, parameter overrides, unverified claims
+- **Adversarial validation**: separate agents try to DISPROVE findings (5 gates: exploitation, impact, baseline, mitigation, parser/runtime)
+- **Structured JSON output**: findings.json validated against JSON schema with trace (entrypoint→propagation→sink), conditions, execution, confidence
+- **Schema validator**: zero-dependency Node.js script (`validate-findings.cjs`) for CI integration
+- **Multi-run additive coverage**: each run targets gaps from prior runs; single run finds ~50% of total vulnerabilities
+- **5 utility scripts**: SQLite scan DB, file ranker, report finalizer, pentest automation, schema validator
 - **Pentest tool cascade**: nmap → python-nmap → socket scan; nikto → wapiti3 → header checks; gobuster → dirsearch → urllib brute
-- **Auto dev server detection**: reads package.json, docker-compose.yml, Makefile, manage.py
-- **Authorization gate**: auto-approves localhost/private IPs, confirms before probing external targets
 - **Three-layer correlation**: source finding → dev exploit → prod confirmation
+- **Dynamic baseline calibration**: compares patterns against industry-standard comparable applications
 
 **Architecture:**
 ```
 security-specialist/
-├── SKILL.md              (router + SOP)
-├── steering/             (11 workflow docs)
-├── scripts/              (4 Python tools, stdlib + optional pip deps)
-└── references/           (4 spec docs: finding format, report format, severity policy, artifacts)
+├── SKILL.md              (router + core principles + anti-patterns)
+├── steering/             (12 workflow docs including hunting methodology)
+├── scripts/              (5 tools: Python + Node.js validator)
+└── references/           (5 spec docs: finding format, report format, severity policy, artifacts, report-schema.json)
 ```
+
+**Improvements in v2.0 (Jun 2026):**
+- Added 6-phase audit pipeline with parallel agents (inspired by Cloudflare security-audit-skill)
+- Added `steering/hunting.md` with 9 attack classes and 12-angle hunting methodology
+- Added adversarial validation (Phase 3) and independent verification (Phase 6)
+- Added `references/report-schema.json` for structured findings with trace, conditions, execution, confidence
+- Added `scripts/validate-findings.cjs` zero-dependency JSON schema validator
+- Added multi-run additive coverage strategy
+- Added 10 anti-patterns to avoid in security audits
+- Added dynamic baseline calibration to severity policy
+- Enhanced finding format: simple (SQLite) + structured (JSON pipeline) dual format
 
 📄 [View full documentation](skills/security-specialist/SKILL.md)
 

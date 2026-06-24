@@ -102,6 +102,24 @@ Not a vulnerability. An observation, best-practice recommendation, or note for f
 
 ---
 
+## Dynamic Baseline
+
+Severity não é absoluta — é relativa ao que a aplicação é e ao que comparáveis aceitam.
+
+### Como Calibrar
+
+1. **Identifique o comparável** em Phase 1 (CMS → outros CMSes, API gateway → outros API gateways, novel app → sem comparável)
+2. **Verifique se o pattern existe no comparável** — se sim e foi explorado, é finding MAIS FORTE. Se nunca explorado em anos de produção, entenda por quê.
+3. **Ajuste severity pela distância do padrão aceito** — se TODO app nessa categoria tem o mesmo pattern e ninguém considera vulnerability, não reporte como HIGH.
+4. **Não use baseline para DESCARTAR** — use para calibrar. Um pattern perigoso é perigoso mesmo se o comparável também o tem.
+
+### Distinction: HIGH vs MEDIUM para Business Logic
+
+- **HIGH**: O finding derrota um security boundary explícito. User performa ação que o sistema explicitamente gate atrás de higher role, e a ação tem consequências reais.
+- **MEDIUM**: Bypass com consequências reais mas limitadas. Requer auth, impacto confinado a dados do atacante, ou conditions uncommon.
+
+---
+
 ## Don't Overcall
 
 Common mistakes that inflate severity beyond what the evidence supports:

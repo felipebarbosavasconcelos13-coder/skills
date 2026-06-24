@@ -99,7 +99,18 @@ Build the HTML by replacing `{{placeholders}}` in the template with actual data.
 
 Write to: `<scan-dir>/security-report.html` (and also repo root for easy access)
 
-## Step 5: Finalize
+## Step 5: Structured Output (Full-Scan Only)
+
+Se este report vem de um full-scan com pipeline de 6 fases, produza também o `findings.json` estruturado:
+
+1. Leia `references/report-schema.json` — siga exatamente
+2. Para cada finding confirmado, popule todos required fields incluindo trace, conditions, execution, confidence
+3. Valide: `node scripts/validate-findings.cjs <scan-dir>/findings.json`
+4. Fix erros antes de prosseguir
+
+Para workflows não-pipeline (discovery, diff-review, pentest), o format simples do SQLite é suficiente.
+
+## Step 6: Finalize
 
 Run the finalization script to seal both reports and compute integrity hashes:
 ```bash

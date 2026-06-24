@@ -236,12 +236,38 @@ Agente completo de segurança de aplicações — executa SAST (análise estáti
 
 **Funcionalidades:**
 - **SOP baseado em input**: path → SAST + DAST dev; path + URL → SAST + dev + prod; URL → DAST
-- **11 steering workflows**: full-scan, diff-review, pentest, threat-model, attack-paths, discovery, triage, remediation, tracking, validation, reporting
-- **4 scripts Python**: banco de dados SQLite, ranqueamento de arquivos, finalizador de relatório, automação de pentest
+- **12 steering workflows**: full-scan, diff-review, pentest, hunting, threat-model, attack-paths, discovery, triage, remediation, tracking, validation, reporting
+- **Pipeline de 6 fases** (full-scan): Recon → Hunt → Validate → Report → Schema → Verify — com agentes paralelos e validação adversarial
+- **9 attack classes**: Injection, Access Control, Resource/File, Cryptography, Business Logic, Feature Abuse, Chained Attacks, Wildcard, Obvious Things
+- **Hunting methodology com 12 ângulos**: sad path, boundaries, component assumptions, wrong ordering, concurrency, parser disagreements, round-trip fidelity, config control, privilege tracing, leaked context, parameter overrides, unverified claims
+- **Validação adversarial**: agentes separados tentam DISPROVAR findings (5 gates: exploitation, impact, baseline, mitigation, parser/runtime)
+- **Structured JSON output**: findings.json validado contra JSON schema com trace (entrypoint→propagation→sink), conditions, execution, confidence
+- **Schema validator**: script Node.js zero-deps (`validate-findings.cjs`) para integração CI
+- **Multi-run additive coverage**: cada run targeta gaps dos runs anteriores; single run encontra ~50% do total
+- **5 scripts utilitários**: SQLite scan DB, ranqueador de arquivos, finalizador de relatório, automação de pentest, validador de schema
 - **Cascata de ferramentas**: nmap → python-nmap → socket; nikto → wapiti3 → header checks; gobuster → dirsearch → urllib
-- **Detecção auto de dev server**: lê package.json, docker-compose.yml, Makefile, manage.py
-- **Gate de autorização**: auto-aprova localhost/IPs privados, confirma antes de probes externos
 - **Correlação em 3 camadas**: finding no source → exploit no dev → confirmação no prod
+- **Calibração de baseline dinâmico**: compara patterns contra aplicações comparáveis do mercado
+
+**Arquitetura:**
+```
+security-specialist/
+├── SKILL.md              (router + core principles + anti-patterns)
+├── steering/             (12 workflow docs incluindo hunting methodology)
+├── scripts/              (5 tools: Python + Node.js validator)
+└── references/           (5 spec docs: finding format, report format, severity policy, artifacts, report-schema.json)
+```
+
+**Melhorias na v2.0 (Jun 2026):**
+- Pipeline de auditoria de 6 fases com agentes paralelos (inspirado no Cloudflare security-audit-skill)
+- Adicionado `steering/hunting.md` com 9 attack classes e hunting methodology de 12 ângulos
+- Validação adversarial (Phase 3) e verificação independente (Phase 6)
+- Adicionado `references/report-schema.json` para findings estruturados com trace, conditions, execution, confidence
+- Adicionado `scripts/validate-findings.cjs` validador de schema zero-deps
+- Estratégia de multi-run additive coverage
+- 10 anti-patterns a evitar em auditorias de segurança
+- Calibração de baseline dinâmico na severity policy
+- Finding format dual: simples (SQLite) + estruturado (JSON pipeline)
 
 📄 [Ver documentação completa](skills/security-specialist/SKILL.md)
 

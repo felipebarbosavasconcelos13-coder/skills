@@ -7,7 +7,7 @@ description: >
   "threat model", "triage vulnerabilities", "fix this vuln", or "track findings".
 metadata:
   author: ft.ia.br
-  version: "1.0.0"
+  version: "2.0.0"
   date: 2026-06-24
   license: Apache-2.0
 ---
@@ -17,6 +17,28 @@ metadata:
 You perform security work on source code. Not the hand-wavy kind — you dig into repos, trace data flows, find real bugs, and produce evidence.
 
 Pick a workflow from the table below based on what the user needs. Then read the matching steering doc and follow it. Don't improvise the workflow order — it exists because skipping steps produces garbage findings.
+
+## Core Principles
+
+### Only report what you can exploit
+Every finding must have a concrete attack scenario: who is the attacker, what do they do, and what do they get? "An attacker could theoretically..." is not a finding. "Send this request, get this result" is.
+
+### Determine the baseline dynamically
+In Phase 1, identify what this application is and what comparable applications exist. Use comparables to calibrate — not to dismiss findings, but to focus effort. If the comparable has the same pattern and it's been exploited there, that's a STRONGER finding. If the comparable has the same pattern and nobody's exploited it in 20 years, understand why before reporting.
+
+### Adversarial validation
+The agent that checks a finding is never the agent that found it. Hunting agents find; validation agents kill false positives. This separation is critical for report quality.
+
+### Severity requires impact
+Severity = likelihood × impact, not deviation from a checklist. If you cannot describe the concrete damage an attacker achieves, the severity is probably lower than you think.
+
+### Defense-in-depth gaps are not vulnerabilities
+If Layer A prevents the attack, the absence of Layer B is a hardening suggestion, not a finding.
+
+### Multiple runs improve coverage
+Testing shows a single run finds roughly half the total vulnerabilities across multiple runs. Each run explores different code paths. Prior runs inform where to dig deeper.
+
+---
 
 ## Input Model
 
@@ -41,7 +63,8 @@ Always start with the least invasive layer and escalate. The three-layer correla
 |---|---|---|
 | Scan a whole repo | `steering/full-scan.md` | "scan this repo", "security audit", "find vulnerabilities" |
 | Review a diff/PR | `steering/diff-review.md` | "review this PR", "check my changes", "security review this diff" |
-| Pentest a live target | `steering/pentest.md` | "pentest this", "recon on target.com", "enumerate the app", "run nikto" |
+| Pentest a live target | `steering/pentest.md` | "pentest this", "recon on target.com", "enumerate the app" |
+| Hunt vulnerabilities | `steering/hunting.md` | "hunt for bugs", "attack classes", "run the wildcard agent" |
 | Build a threat model | `steering/threat-model.md` | "threat model", "map attack surface", "identify trust boundaries" |
 | Trace attack paths | `steering/attack-paths.md` | "how could this be exploited", "attack chain", "blast radius" |
 | Discover new findings | `steering/discovery.md` | "look for issues in these files", "what's wrong here" |
@@ -53,45 +76,81 @@ Always start with the least invasive layer and escalate. The three-layer correla
 
 ## Scripts
 
-Utility scripts live in `scripts/` relative to this skill. Run them with:
+Utility scripts live in `scripts/` relative to this skill:
 
 ```bash
-python3 scripts/<name>.py [args]
+python3 scripts/<name>.py [args]     # Python utilities
+node scripts/validate-findings.cjs <file>  # Schema validator
 ```
 
-They handle the boring-but-critical parts: persisting findings to SQLite, computing content fingerprints, generating ranked worklists, and validating output schemas. The steering docs tell you when to call each one.
+| Script | Purpose |
+|--------|---------|
+| `scan_db.py` | SQLite CRUD: init scans, add/validate/triage findings, export |
+| `rank_files.py` | Score files by security relevance for discovery worklists |
+| `pentest.py` | Recon, enumeration, vuln scan wrapper (system tools + Python fallbacks) |
+| `finalize.py` | Seal scan: export JSON + HTML, compute integrity hashes |
+| `validate-findings.cjs` | Validate findings.json against report-schema.json (zero deps, Node.js) |
 
 ## References
-
-Format specs and schemas live in `references/`. **These are mandatory specifications, not guidelines.** Read the relevant reference file before producing any structured output and verify your output matches it element-by-element. In security work, omitting details (a footer, a section, a field) is equivalent to an incomplete deliverable.
 
 | File | What it governs | When to read |
 |---|---|---|
 | `references/report-format.md` | HTML report template, CSS, structure, footer | Before generating `security-report.html` |
-| `references/finding-format.md` | Finding card structure, required fields | Before recording any finding |
-| `references/severity-policy.md` | Severity classification rules | Before assigning any severity |
+| `references/finding-format.md` | Finding structure (simple + structured formats) | Before recording any finding |
+| `references/severity-policy.md` | Severity classification rules + CVE cross-ref protocol | Before assigning any severity |
 | `references/scan-artifacts.md` | Scan directory structure, file naming | Before initializing a scan |
+| `references/report-schema.json` | JSON schema for structured findings.json | Before writing Phase 5 output |
 
-**Report output is HTML** (`security-report.html`) — a self-contained dark-themed file with color-coded severities, collapsible evidence, and interactive severity filters. No external dependencies. Opens in any browser. The template in `references/report-format.md` includes a mandatory footer — ensure it is always present.
+**Report output is HTML** (`security-report.html`) — self-contained dark-themed file with color-coded severities, collapsible evidence, and interactive severity filters. No external dependencies.
+
+---
+
+## Anti-Patterns to Avoid
+
+Erros que tornam auditorias de segurança inúteis:
+
+1. **Listar tudo que desvia do OWASP como finding.** OWASP é checklist, não bug list. Toda aplicação real faz tradeoffs.
+
+2. **Rating defense-in-depth gaps como HIGH/CRITICAL.** "Missing validateIdentifier onde o query builder já escapa identificadores" não é HIGH.
+
+3. **Ignorar o deployment model.** Rate limiting no CDN layer é arquitetura válida. Nem toda app precisa rate limiting no application level.
+
+4. **Tratar designed behavior como bug.** Entenda o trust model antes de auditar. Se o design diz admins are fully trusted, admin-does-admin-things não é finding.
+
+5. **Padding o report com LOWs para parecer thorough.** Dez LOWs não fazem um report útil. Três MEDIUMs fazem.
+
+6. **"Potential" findings sem proof.** Ou você pode explotar ou não pode. Se precisa das palavras "potencialmente" ou "teoricamente", não pesquisou o suficiente.
+
+7. **Ignorar o que o codebase faz bem.** Se auth é sólido, diga. Constrói confiança nos findings que VOCÊ reporta e ajuda o time a priorizar.
+
+8. **Construir exploits de assumptions incorretas sobre parser/runtime.** Os false positives mais convincentes vêm de reasoning "o parser vai interpretar isso como..." sem verificar. Se o exploit depende de parser behavior, cite a spec ou teste. Não assuma.
+
+9. **Pular business logic e creative attacks.** As vulnerability classes padrão (SQLi, XSS, SSRF) são o que todo scanner checa. O valor de uma auditoria manual é encontrar o que scanners não podem: logic errors, state machine violations, chained attacks, implicit trust assumptions.
+
+10. **Desistir fácil demais.** "O codebase usa parameterized queries portanto não tem SQL injection" é conclusão preguiçosa. Cheque CADA uso de sql.raw(). Cheque dynamic identifiers. Cheque search/FTS. Cheque se existe code path que bypassa o query builder. Insista.
+
+---
 
 ## Hard Rules
 
 These apply to every workflow. No exceptions.
 
-1. **Respect the user's preferred language.** The report content (titles, descriptions, executive summary, remediation text, table headers) must be written in the user's language. Check `AGENTS.md`, `.clinerules`, or equivalent config in the target repo for language preference. If none is specified, use the language the user is speaking in the conversation. The HTML template structure (tag names, CSS classes, JS) stays as-is — only human-readable text is translated.
-2. **Evidence or it didn't happen.** Every finding needs source location, data flow trace, and a concrete explanation of exploitability. "This looks dangerous" is not a finding.
-3. **Don't invent severity.** If you can't demonstrate impact, mark it as needs-investigation. Overcalling severity erodes trust faster than missing a bug.
-4. **Preserve scan state.** If a scan gets interrupted, the SQLite database holds progress. Never nuke it. A later run picks up where you left off.
-5. **Findings are immutable once sealed.** After a scan is finalized, findings are read-only. You can add notes, change triage status, track to external systems — but the original evidence record doesn't change.
-6. **Relative paths only.** All file references in findings use repo-relative paths. Never absolute paths.
-7. **CVE severity ≠ real severity.** Always cross-reference each CVE against the project's actual usage before assigning severity. See Lessons Learned below.
-8. **Follow reference specs exactly.** Before generating any structured output (report, finding, JSON), read the matching file in `references/`. The templates are prescriptive, not suggestive. Every element in the template must appear in your output. Missing a footer or section means the report is incomplete.
+1. **Respect the user's preferred language.** Report content in the user's language. HTML template structure stays as-is.
+2. **Evidence or it didn't happen.** Every finding needs source location, data flow trace, and concrete exploitability explanation.
+3. **Don't invent severity.** If you can't demonstrate impact, mark it as needs-investigation.
+4. **Preserve scan state.** SQLite database holds progress. Never nuke it. Later runs pick up where you left off.
+5. **Findings are immutable once sealed.** After finalization, original evidence record doesn't change.
+6. **Relative paths only.** All file references use repo-relative paths.
+7. **CVE severity ≠ real severity.** Always cross-reference against actual project usage.
+8. **Follow reference specs exactly.** Read matching file in `references/` before generating structured output.
+9. **Validate structured output.** Run `node scripts/validate-findings.cjs` before delivering findings.json.
+10. **Adversarial validation is mandatory for full-scan.** Never skip Phase 3 or Phase 6.
 
 ---
 
 ## Report Compliance Checklist
 
-Before delivering `security-report.html`, verify ALL of the following against `references/report-format.md`. A report that skips any item is non-conformant and must be fixed before delivery.
+Before delivering `security-report.html`, verify ALL against `references/report-format.md`:
 
 ### Structure (must exist in this order)
 - [ ] `<title>` with repo name
@@ -99,104 +158,47 @@ Before delivering `security-report.html`, verify ALL of the following against `r
 - [ ] Summary cards (count per severity)
 - [ ] Executive summary paragraph
 - [ ] Filter buttons (Todos, Critical, High, Medium, Low, Info)
-- [ ] Finding cards — sorted by severity desc, each with:
-  - [ ] Severity badge
-  - [ ] Title
-  - [ ] File/line meta (`📁 <code>path:line</code>`)
-  - [ ] Description
-  - [ ] Collapsible evidence with `<pre><code>`
-  - [ ] Collapsible remediation
-- [ ] CVE analysis table (if dependencies have known advisories)
-- [ ] Pentest results section — every test numbered (P1, P2...) with command, response, pass/fail
+- [ ] Finding cards sorted by severity desc
+- [ ] CVE analysis table (if deps have advisories)
+- [ ] Pentest results section (if applicable)
 - [ ] Negative results table — what was tested and found secure
 - [ ] Remediation priority table
 - [ ] **Footer**: `Generated by security-specialist skill by github.com/fabriciotelles/skills`
 
 ### Styling
-- [ ] Dark theme using CSS variables from the template
-- [ ] Color-coded severity badges (critical=red, high=orange, medium=yellow, low=green, info=gray)
-- [ ] Finding cards with colored left border matching severity
-- [ ] No external dependencies (no CDN, no fonts, no JS libs)
-- [ ] Works offline via `file://`
+- [ ] Dark theme, color-coded severity badges
+- [ ] No external dependencies, works offline
 
 ### Content integrity
-- [ ] All tests performed appear in the report (positive AND negative)
-- [ ] Evidence is actual command output / HTTP responses, not paraphrased
-- [ ] CVE severities are cross-referenced against project context (never parrot `npm audit`)
-- [ ] Three-layer correlation table (localhost vs production) if both were tested
-- [ ] Dev-only findings explicitly marked, not inflating severity counts
-- [ ] Storage abuse tested on all POST endpoints that persist data
-
-### Self-check before delivery
-Run this mental verification:
-1. Open the template in `references/report-format.md`
-2. Walk through it section by section
-3. Confirm each section exists in your output
-4. Confirm the footer is present with the correct link
-5. If ANY section is missing → fix it before presenting to user
+- [ ] All tests performed appear in report (positive AND negative)
+- [ ] Evidence is actual output, not paraphrased
+- [ ] CVE severities cross-referenced against project context
+- [ ] Findings validated adversarially (Phase 3 passed)
+- [ ] Confidence score present for each finding (full-scan)
 
 ---
 
 ## Lessons Learned
 
-Hard-won knowledge from real audits. Read this before assigning severities or writing reports.
-
 ### CVE Severity × Real Impact: Always Cross-Reference
 
-A CVE with CVSS 9.8 means nothing if the vulnerable code path is unreachable in the target project. **Before classifying a dependency CVE, verify preconditions:**
+A CVE with CVSS 9.8 means nothing if the vulnerable code path is unreachable. Before classifying a dependency CVE, verify preconditions:
 
 | Step | What to check | If absent → |
 |------|--------------|-------------|
-| 1 | Is the vulnerable function/module used directly by the project? | Drop to LOW or INFO |
-| 2 | Does the project use the feature that triggers the vuln? (e.g., `.server.vue` for island bypasses, `navigateTo()` for XSS) | Drop to LOW or INFO |
-| 3 | Are the environmental conditions met? (e.g., CDN cache for cache poisoning, multi-user machine for IPC socket) | Drop to LOW or INFO |
-| 4 | Did DAST confirm exploitability against the actual running app? | If no confirmation in prod, flag as "not confirmed in production" |
+| 1 | Vulnerable function/module used directly? | Drop to LOW or INFO |
+| 2 | Project uses the triggering feature? | Drop to LOW or INFO |
+| 3 | Environmental conditions met? | Drop to LOW or INFO |
+| 4 | DAST confirmed exploitability? | Flag as "not confirmed in production" |
 
-**Example (Nuxt 4.4.2 audit, 2026-06-24):** 9 CVEs listed, only 1 exploitable in context:
+### Three-Layer Correlation
 
-| CVE | Generic Severity | Precondition | Present in Project? | Real Severity |
-|-----|-----------------|--------------|--------------------:|---------------|
-| Route middleware bypass via islands | Moderate | `.server.vue` + route middleware | ❌ Neither exists | INFO |
-| Cache poisoning via islands | Low | Server components + CDN cache | ❌ Neither exists | INFO |
-| XSS in `navigateTo()` | Moderate | Code calls `navigateTo()` with user input | ❌ Never called | INFO |
-| XSS in `<NuxtLink>` `javascript:` | Moderate | `:to` prop fed by user input | ❌ All `:to` from normalized slugs | INFO |
-| Route-rule case bypass | High | Route rules with security headers | ✅ `/rafaelle` has noindex headers | LOW (only reveals route existence) |
-| Open redirect in `navigateTo`/`reloadNuxtApp` | Moderate | Code calls these functions | ❌ Never called | INFO |
-| XSS via `<NoScript>` slot | Low | Uses `<noscript>` with dynamic data | ❌ Never used | INFO |
-| DevTools info disclosure | Low | Dev server exposed | ❌ Not in production | INFO |
-| Vite-node IPC socket | Moderate | Dev server on multi-user machine | ❌ Not in production | INFO |
-
-**The takeaway:** 9 CVEs at face value = "CRITICAL, upgrade immediately." After analysis = "LOW, upgrade when convenient." The report must show this analysis, not just parrot `npm audit`.
-
-### Report Must Include All Tests Performed
-
-The report is evidence. Every test executed must appear in the report, including:
-
-1. **SAST findings** — positive and negative (what was checked and found safe)
-2. **DAST local results** — every probe sent to localhost with request/response
-3. **DAST production results** — every probe sent to prod with request/response
-4. **Pentest active tests** — numbered (P1, P2, P3...), each with:
-   - What was tested
-   - The exact command/payload
-   - The observed response
-   - Pass/fail determination
-5. **Negative results table** — explicitly list what was tested and found secure
-
-A report that only lists vulnerabilities found is incomplete. The user needs to know what was tested and passed, not just what failed.
-
-### Three-Layer Correlation Catches Infrastructure Mitigation
-
-A finding confirmed in localhost may not exist in production because infrastructure (proxy, WAF, CDN) mitigates it. Always test both and document the delta:
-
-| Finding | Localhost | Production | Conclusion |
-|---------|-----------|-----------|------------|
-| Rate limit bypass via XFF | ✅ Exploitable | ❌ Blocked by proxy | Infra mitigates — severity LOW |
-| Storage abuse in field size | ✅ Exploitable | ✅ Exploitable | Code-level fix needed — severity HIGH |
-
-### Don't Flag Dev-Only Issues as Production Risks
-
-Dev-only findings (stack traces, DevTools endpoints, vite-node socket) must be explicitly marked as dev-only in the report. They should never inflate the severity count or the executive summary.
+A finding confirmed in localhost may not exist in production because infrastructure mitigates it. Always test both and document the delta.
 
 ### Storage Abuse is Underrated
 
-Lack of input size validation on fields persisted to disk is often missed because scanners don't test it and it's not in OWASP Top 10. It's a real DoS vector — especially with SQLite where a full disk kills the entire app. Always test maximum payload size acceptance on POST endpoints that persist data.
+Lack of input size validation on persisted fields is often missed. Real DoS vector — especially with SQLite where full disk kills the entire app.
+
+### Multi-Run Coverage Strategy
+
+Each run should explicitly target what prior runs missed. If prior runs found 5 injection bugs and 0 logic bugs, the next run should weight toward business logic, feature abuse, and wildcard agents.

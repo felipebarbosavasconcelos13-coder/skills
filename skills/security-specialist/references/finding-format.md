@@ -1,82 +1,201 @@
 # Finding Format Specification
 
-This document defines the canonical structure of a security finding. Every finding produced by the security-specialist agent MUST conform to this schema.
+Este documento define a estrutura canônica de um security finding. Todo finding produzido pelo security-specialist DEVE conformar a este schema.
 
 ---
 
-## Fields
+## Formato Simples (SQLite — uso interno)
+
+Para persistência no scan.db e workflows modulares (discovery, triage, diff-review):
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | UUID v4 | yes | Unique identifier for this finding |
-| `scan_id` | UUID v4 | yes | Foreign key to the parent scan session |
-| `title` | string | yes | Concise vulnerability name (≤ 80 chars). Describe what and where. |
-| `severity` | enum | yes | One of: `critical`, `high`, `medium`, `low`, `info` |
-| `category` | enum | yes | One of: `injection`, `xss`, `auth`, `crypto`, `exposure`, `config`, `dependency`, `logic`, `other` |
-| `status` | enum | yes | One of: `open`, `fixed`, `false-positive`, `accepted-risk`, `tracked` |
-| `file_path` | string | yes | Repository-relative path to the affected file (e.g. `src/api/users.py`) |
-| `line_number` | integer | yes | Line number where the vulnerability is located or originates |
-| `description` | string | yes | 2–4 sentences explaining what the vulnerability is and why it matters |
-| `evidence` | string | yes | Proof: code snippet, data flow trace, or proof-of-concept |
-| `remediation` | string | no | Suggested fix or mitigation strategy |
-| `tracking_url` | string | no | URL to an external issue tracker (Jira, GitHub Issue, GitLab Issue, etc.) |
-| `notes` | string | no | Free-text triage notes added during review |
-| `created_at` | string | yes | ISO 8601 timestamp of when the finding was recorded |
+| `id` | UUID v4 | yes | Identificador único |
+| `scan_id` | UUID v4 | yes | FK para scan session parent |
+| `title` | string | yes | Nome da vulnerabilidade (≤ 80 chars) |
+| `severity` | enum | yes | `critical`, `high`, `medium`, `low`, `info` |
+| `category` | enum | yes | `injection`, `xss`, `auth`, `crypto`, `exposure`, `config`, `dependency`, `logic`, `other` |
+| `status` | enum | yes | `open`, `fixed`, `false-positive`, `accepted-risk`, `tracked` |
+| `file_path` | string | yes | Repo-relative path |
+| `line_number` | integer | yes | Line onde a vulnerabilidade origina |
+| `description` | string | yes | 2–4 frases explicando o quê e por quê importa |
+| `evidence` | string | yes | Código, data flow trace, ou PoC |
+| `remediation` | string | no | Fix sugerido |
+| `tracking_url` | string | no | URL do issue tracker externo |
+| `notes` | string | no | Notas de triage |
+| `created_at` | string | yes | ISO 8601 timestamp |
 
 ---
 
-## Field Constraints
+## Formato Estruturado (JSON — output de full-scan pipeline)
 
-- **title**: Should follow the pattern `"<Vulnerability Type> in <location/feature>"`. Avoid generic titles like "Security Issue Found".
-- **severity**: Assign per `severity-policy.md`. Do not guess — apply the decision criteria.
-- **category**: Choose the most specific match. Use `other` only when no category fits.
-- **status**: Initial findings are always `open`. Other statuses are set during triage or remediation.
-- **file_path**: Always relative to repository root. No leading slash. Use forward slashes regardless of OS.
-- **line_number**: Points to the most relevant line. For multi-line issues, use the first affected line.
-- **evidence**: Must be concrete. Include the actual code, the trace, or the request/response. Never write "vulnerability exists here" without showing it.
+Para findings que passam pela pipeline completa de 6 fases (full-scan), use o formato rico definido em `report-schema.json`. Este formato é **obrigatório** para o output `findings.json` do full-scan.
 
----
+### Campos do Formato Estruturado
 
-## Examples
+| Field | Description |
+|-------|-------------|
+| `verdict` | `confirmed` ou `rejected` |
+| `title` | Título conciso e padronizado |
+| `description` | Explicação completa com detalhes de reprodução |
+| `root_cause` | Template: `[function] em [file] não [ação], permitindo [consequência]` |
+| `intended_behavior` | O que o dev tentou construir (lógica não-vulnerável) |
+| `trace` | Array sequencial: `entrypoint` → `propagation`* → `sink` |
+| `conditions` | Pré-requisitos factuais para exploração |
+| `execution` | Perspectiva do atacante, payloads, instruções, resultado esperado |
+| `remediation` | Estratégia + code_changes opcionais |
+| `severity` | Likelihood × Impact, cada com score + reason |
+| `confidence` | Score (low/medium/high) + reason |
 
-### Example 1: SQL Injection
+### Trace
 
+Cada step do trace contém:
 ```json
 {
-  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "scan_id": "f0e1d2c3-b4a5-6789-0123-456789abcdef",
-  "title": "SQL Injection in user search endpoint",
-  "severity": "high",
-  "category": "injection",
-  "status": "open",
-  "file_path": "src/routes/users.js",
-  "line_number": 47,
-  "description": "User-supplied search parameter is concatenated directly into a SQL query without sanitization or parameterization. An authenticated user can extract arbitrary data from the database, including other users' credentials and PII.",
-  "evidence": "```javascript\n// src/routes/users.js:47\nconst query = `SELECT * FROM users WHERE name LIKE '%${req.query.search}%'`;\nconst results = await db.raw(query);\n```\nPayload: `search=' UNION SELECT password FROM users--` returns all password hashes.",
-  "remediation": "Use parameterized queries. Replace with: `db('users').where('name', 'like', `%${search}%`)` or use prepared statements with bound parameters.",
-  "tracking_url": null,
-  "notes": null,
-  "created_at": "2026-06-24T03:15:00Z"
+  "kind": "entrypoint|propagation|sink",
+  "file": "src/routes/users.js",
+  "line": 42,
+  "scope": "searchUsers",
+  "description": "User input from query param 'q' enters the handler"
 }
 ```
 
-### Example 2: Hardcoded API Key
+**Regras:**
+- Mínimo 2 steps (entrypoint + sink)
+- Primeiro step DEVE ser `kind: "entrypoint"`
+- Último step DEVE ser `kind: "sink"`
+- File paths relativos à raiz do repositório
+- Scope é function/method name sem parênteses
+
+### Conditions
+
+Pré-requisitos factuais. Array vazio = explorável por default.
+```json
+{
+  "kind": "authentication_level",
+  "description": "Requires authenticated session with any role"
+}
+```
+
+Kinds válidos: `authentication_level`, `authorization_role`, `user_interaction`, `system_configuration`, `network_routing`, `environmental_dependency`, `data_state`, `timing_dependency`, `third_party_dependency`
+
+### Execution
 
 ```json
 {
-  "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-  "scan_id": "f0e1d2c3-b4a5-6789-0123-456789abcdef",
-  "title": "Hardcoded Stripe secret key in payment service",
-  "severity": "critical",
-  "category": "exposure",
-  "status": "open",
-  "file_path": "src/services/payment.ts",
-  "line_number": 12,
-  "description": "A live Stripe secret key is hardcoded in source. Anyone with repository access can use this key to issue refunds, access customer payment data, and create charges. The key prefix confirms this is a production credential.",
-  "evidence": "```typescript\n// src/services/payment.ts:12\nconst stripe = new Stripe('sk_live_EXAMPLE_KEY_REDACTED_000', {\n  apiVersion: '2024-06-20',\n});\n```",
-  "remediation": "1. Rotate the exposed key immediately in the Stripe dashboard. 2. Move the key to environment variables or a secrets manager. 3. Add secret patterns to a pre-commit secret scanner.",
-  "tracking_url": "https://gitlab.example.com/project/-/issues/142",
-  "notes": "Key confirmed active via Stripe API check (read-only test). Rotation is urgent.",
-  "created_at": "2026-06-24T03:15:22Z"
+  "attacker_perspective": "Authenticated user with basic role",
+  "payloads": ["GET /api/search?q=' UNION SELECT password FROM users--"],
+  "instructions": [
+    "Login with any valid account",
+    "Navigate to search endpoint",
+    "Inject SQL via query parameter"
+  ],
+  "expected_result": "Response contains all user password hashes"
+}
+```
+
+### Confidence
+
+```json
+{
+  "score": "high",
+  "reason": "Full trace verified against source. All steps readable and confirmed."
+}
+```
+
+- **high**: Trace completo verificado, exploit testável
+- **medium**: Trace parcialmente verificado, algumas assumptions
+- **low**: Static analysis only, complex routing, missing files
+
+---
+
+## Quando Usar Qual Formato
+
+| Workflow | Formato |
+|----------|---------|
+| `full-scan` (pipeline 6 fases) | **Estruturado** (findings.json validado contra schema) |
+| `discovery`, `diff-review`, `triage` | **Simples** (SQLite) |
+| `pentest` | **Simples** (SQLite) + evidence expandida |
+| `reporting` (HTML final) | Ambos — HTML renderiza de qualquer fonte |
+
+---
+
+## Validação
+
+Para o formato estruturado, valide com:
+```bash
+node scripts/validate-findings.cjs .security/scans/<timestamp>/findings.json
+```
+
+O validador checa: required fields, enum values, structural constraints, `additionalProperties`, e semantic rules (trace starts at entrypoint, ends at sink).
+
+---
+
+## Exemplo: Formato Estruturado Completo
+
+```json
+{
+  "verdict": "confirmed",
+  "title": "SQL Injection in user search endpoint",
+  "description": "User-supplied search parameter is concatenated directly into SQL query. Authenticated user can extract arbitrary data including credentials.",
+  "root_cause": "searchUsers in src/routes/users.js does not parameterize user input, allowing arbitrary SQL execution.",
+  "intended_behavior": "Search should filter users by name using parameterized queries, returning only matching records the caller is authorized to see.",
+  "trace": [
+    {
+      "kind": "entrypoint",
+      "file": "src/routes/users.js",
+      "line": 35,
+      "scope": "searchUsers",
+      "description": "User input from req.query.search enters handler"
+    },
+    {
+      "kind": "propagation",
+      "file": "src/routes/users.js",
+      "line": 42,
+      "scope": "searchUsers",
+      "description": "Input concatenated into SQL string template without escaping"
+    },
+    {
+      "kind": "sink",
+      "file": "src/routes/users.js",
+      "line": 43,
+      "scope": "searchUsers",
+      "description": "Concatenated string passed to db.raw() for execution"
+    }
+  ],
+  "conditions": [
+    {
+      "kind": "authentication_level",
+      "description": "Requires valid session (any role)"
+    }
+  ],
+  "execution": {
+    "attacker_perspective": "Authenticated user with basic role",
+    "payloads": ["GET /api/users?search=' UNION SELECT password FROM users--"],
+    "instructions": [
+      "Login with any valid account",
+      "Send GET request to /api/users with crafted search parameter",
+      "Observe response containing all password hashes"
+    ],
+    "expected_result": "Response body contains password hashes for all users in database"
+  },
+  "remediation": {
+    "strategy": "Use parameterized queries via the ORM's query builder instead of string concatenation.",
+    "code_changes": [
+      {
+        "file_name": "src/routes/users.js",
+        "fixed_code": "const results = await db('users').where('name', 'like', `%${search}%`);"
+      }
+    ]
+  },
+  "severity": {
+    "likelihood": { "score": "high", "reason": "Any authenticated user can exploit. No special tools needed." },
+    "impact": { "score": "critical", "reason": "Full database read access including credentials and PII." },
+    "overall_severity": "critical"
+  },
+  "confidence": {
+    "score": "high",
+    "reason": "Full trace verified. db.raw() confirmed at line 43. No parameterization in path."
+  }
 }
 ```

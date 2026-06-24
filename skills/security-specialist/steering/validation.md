@@ -1,6 +1,12 @@
 # Steering: Validate a Finding
 
-Determine whether a reported finding is real and exploitable. Produce a verdict: `confirmed`, `false-positive`, or `needs-more-info`.
+Determine se um finding reportado é real e explorável. Produza um verdict: `confirmed`, `rejected`, ou `needs-more-info`.
+
+## Princípio: Validação Adversarial
+
+O agente que valida NUNCA deve ser o agente que encontrou o finding. Hunting agents são biased para encontrar coisas; validation agents são biased para matar false positives. Este step adversarial é crítico.
+
+---
 
 ## Step 1: Load Finding Details
 
@@ -8,124 +14,124 @@ Determine whether a reported finding is real and exploitable. Produce a verdict:
 python3 scripts/scan_db.py show --finding-id <id>
 ```
 
-Extract:
-- The claimed vulnerability type (CWE)
-- The location (file, line, function, or endpoint)
-- The source of the report (which scanner, or manual)
-- Any existing evidence or PoC
+Extraia:
+- Tipo de vulnerabilidade claimed (CWE)
+- Location (file, line, function, ou endpoint)
+- Source do report (qual scanner, ou manual)
+- Evidência ou PoC existente
+- Trace claimed (se disponível)
 
 ## Step 2: Read the Code at the Finding Location
 
-Open the file. Read the function. Understand what it does. Don't rely on the scanner's snippet — scanners truncate context and miss surrounding logic.
+Abra o file. Leia a function. Entenda o que faz. Não confie no snippet do scanner — scanners truncam contexto e perdem surrounding logic.
 
-Questions to answer:
-- Does the pattern the scanner flagged actually exist here?
-- Is this dead code? (unreachable, commented out, behind a permanent feature flag)
-- Has it been refactored since the scan? (check git log for the file)
+Perguntas:
+- O pattern que o scanner flagged realmente existe aqui?
+- É dead code? (unreachable, commented out, behind permanent feature flag)
+- Foi refatorado desde o scan? (cheque git log)
+- Se o código não bate com o report → provável **false positive** de resultados stale.
 
-If the code doesn't match what the scanner reported → likely **false positive** from stale results.
+## Step 3: Testes de Validação (5 Gates)
 
-## Step 3: Trace the Data Flow
+Aplique **todos** os testes abaixo. O finding deve sobreviver cada um:
 
-This is the core of validation. You need to prove (or disprove) that attacker-controlled data reaches a dangerous operation.
+### 3a. Exploitation Test
+Leia o código real em cada step do trace. O data flow funciona como claimed?
+- Pode construir o exact input (HTTP request, CLI invocation, API call, crafted file) que triggera isto?
+- O input realmente alcança o sink sem ser blocked/transformed/validated no caminho?
+
+### 3b. Impact Test
+O que o atacante **realmente ganha**?
+- Se a resposta é "aprende field names" ou "causa um error" → LOW máximo
+- Se não pode descrever dano concreto em 2 frases → severity provavelmente está inflada
+
+### 3c. Baseline Test
+O comparável identificado em Phase 1 tem o mesmo pattern?
+- Se sim e já foi explorado → finding MAIS FORTE, não mais fraco
+- Se sim e nunca explorado em anos de produção → entenda por quê antes de reportar
+- Se não tem comparável ou comparável não tem o pattern → proceda normalmente
+
+### 3d. Mitigation Test
+Existe outra layer que previne exploitation?
+- WAF rules
+- Middleware de input validation upstream
+- Framework defaults (auto-escape, parameterized queries, CSRF tokens)
+- Database constraints
+- Network isolation
+- Rate limiting
+
+Mitigações não tornam false positive — reduzem severity. Note mas ainda confirme o flaw subjacente.
+
+### 3e. Parser/Runtime Behavior Test
+Se o exploit depende de como parser/runtime handles input específico:
+- Verifique contra a spec ou implementação REAL
+- NÃO assuma behavior de intuição
+- Cite a spec ou teste dinamicamente
+- Os false positives mais convincentes vêm de reasoning "o parser vai interpretar isso como..." sem verificar
+
+## Step 4: Trace the Data Flow
 
 ### Identify the Source
-Where does external input enter? Common sources:
 - HTTP request parameters (query, body, headers, cookies)
 - File uploads
-- Database records (if populated by user input elsewhere)
-- Environment variables (rarely attacker-controlled, but check)
+- Database records (se populated por user input elsewhere)
 - Message queues / event payloads
 
 ### Trace Through Transformations
-Follow the data from source to the flagged location:
-- Is it validated? (type check, regex, allowlist)
-- Is it sanitized? (HTML encoding, SQL escaping, shell quoting)
-- Is it transformed into a safe type? (parsed as integer, resolved as enum)
-- Does it pass through a framework-level protection? (ORM parameterization, template auto-escape)
-
-### Identify the Sink
-The dangerous operation where the data lands:
-- SQL query execution
-- HTML rendering
-- OS command execution
-- File system operations
-- Redirect targets
-- Deserialization
+- Validado? (type check, regex, allowlist)
+- Sanitizado? (HTML encoding, SQL escaping, shell quoting)
+- Transformado em safe type? (parsed as integer, resolved as enum)
+- Passa por framework-level protection? (ORM parameterization, template auto-escape)
 
 ### Document the Chain
-Write it out explicitly:
 ```
-Source: req.query.search (user-controlled, string, no length limit)
-  → passed to: buildQuery(search) at db/queries.js:45
-  → buildQuery concatenates into SQL string (NO parameterization)
-  → executed via: db.raw(query) at db/queries.js:52
+Source: req.query.search (user-controlled, string, sem length limit)
+  → passed to: buildQuery(search) em db/queries.js:45
+  → buildQuery concatena em SQL string (SEM parameterization)
+  → executed via: db.raw(query) em db/queries.js:52
 Sink: raw SQL execution
-Mitigations: none found
-Verdict: CONFIRMED — classic SQL injection
+Mitigations: nenhuma encontrada
+Verdict: CONFIRMED — SQL injection clássica
 ```
 
-## Step 4: Check for Mitigating Controls
+## Step 5: Attempt Proof-of-Concept
 
-Even if the code pattern looks vulnerable, check for layers that might prevent exploitation:
+Se pode demonstrar exploitation safety sem causar dano:
 
-- **WAF rules** — check for relevant WAF config (Cloudflare rules, AWS WAF, ModSecurity)
-- **Input validation upstream** — a middleware or decorator that rejects malicious patterns before the code is reached
-- **Framework protections** — auto-escaping, CSRF tokens, SameSite cookies, CSP
-- **Network isolation** — is the vulnerable endpoint only accessible internally?
-- **Authentication requirements** — does exploitation require a valid session?
-- **Rate limiting** — does it prevent brute-force-style exploitation?
+**Para injection flaws:** Construa payload que produz observable side effect.
+**Para auth bypasses:** Mostre o request que alcança protected resources sem credentials válidos.
+**Para path traversal:** Mostre o path que resolve fora do diretório intended.
 
-Mitigations don't make a finding false-positive — they reduce severity or exploitability. Note them but still confirm the underlying code flaw.
-
-## Step 5: Attempt Proof-of-Concept (When Feasible)
-
-If you can safely demonstrate exploitation without causing damage:
-
-**For injection flaws:** Construct a payload that produces an observable side effect (e.g., time delay for blind SQLi, distinctive string in response for XSS).
-
-**For auth bypasses:** Show the request that reaches protected resources without valid credentials.
-
-**For path traversal:** Show the path that resolves outside the intended directory.
-
-Document the PoC:
-```
-PoC: GET /api/search?q=' OR 1=1--
-Expected: returns all records instead of filtered results
-Observed: [what actually happened, or what WOULD happen based on code analysis]
-```
-
-### When Dynamic Testing Isn't Feasible
-
-If you can't run the app (no local env, production-only, complex setup):
-- Rely on static trace: source → transforms → sink
-- State explicitly: "Static analysis only — no dynamic confirmation"
-- Note what would be needed to confirm dynamically
-- This is still valid for a `confirmed` verdict if the static trace is unambiguous
+### Quando Dynamic Testing Não É Viável
+- Rely em static trace: source → transforms → sink
+- State: "Static analysis only — no dynamic confirmation"
+- Note o que seria necessário para confirmar dinamicamente
+- Ainda válido para `confirmed` se static trace é unambíguo
 
 ## Step 6: Render Verdict
 
-| Verdict | Criteria |
+| Verdict | Critérios |
 |---------|----------|
-| **confirmed** | Attacker-controlled data reaches a dangerous sink with insufficient protection. Exploit path is clear. |
-| **false-positive** | The pattern doesn't exist, code is unreachable, or mitigations fully prevent exploitation at all layers. |
-| **needs-more-info** | Can't determine from available evidence. Specify exactly what's missing (e.g., "need to check if WAF blocks this pattern," "need runtime testing"). |
+| **confirmed** | Data attacker-controlled alcança dangerous sink com proteção insuficiente. Exploit path claro. Todos 5 gates passed. |
+| **rejected** | Pattern não existe, código unreachable, ou mitigações previnem completamente exploitation. Evidência concreta de por quê. |
+| **needs-more-info** | Não pode determinar. Especifique exatamente o que está faltando. |
 
-## Step 7: Record the Validation Result
+## Step 7: Record
 
 ```bash
 python3 scripts/scan_db.py validate \
   --finding-id <id> \
-  --verdict <confirmed|false-positive|needs-more-info> \
-  --evidence "source: req.query.q → sink: db.raw() at queries.js:52, no parameterization, no WAF" \
+  --verdict <confirmed|rejected|needs-more-info> \
+  --evidence "source: req.query.q → sink: db.raw() em queries.js:52, sem parameterization" \
   --poc "GET /api/search?q=' OR 1=1--" \
   --notes "Static trace only, no dynamic confirmation"
 ```
 
-## Principles
+## Princípios
 
-- A finding without a traceable data flow is not confirmed — it's a hypothesis.
-- Scanners report patterns, not exploits. Your job is to determine if the pattern is exploitable in context.
-- False positives are fine. Document why and move on. Don't waste cycles defending a scanner's output.
-- "Needs-more-info" is honest. Better than guessing. State exactly what evidence would resolve it.
-- Mitigations reduce risk but don't eliminate findings. A SQLi behind a WAF is still a SQLi — the WAF might get bypassed.
+- Finding sem traceable data flow não é confirmed — é hipótese.
+- Scanners reportam patterns, não exploits. Seu job é determinar se o pattern é explorável em contexto.
+- "Rejected" é fine. Documente por quê e siga em frente.
+- "Needs-more-info" é honesto. Melhor que adivinhar.
+- Mitigações reduzem risco mas não eliminam findings. SQLi behind WAF ainda é SQLi.
+- **Kill false positives agressivamente, mas não mate findings reais.** Report curto com 3 findings reais vale mais que report longo com 30 teóricos.
