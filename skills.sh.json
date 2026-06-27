@@ -36,10 +36,11 @@
     },
     {
       "title": "Web Quality & Standards",
-      "description": "Frontend audits, website specs, and agent readiness.",
+      "description": "Frontend audits, website specs, design system validation, and agent readiness.",
       "skills": [
         "front-end-checklist",
         "website-spec",
+        "design-md-validator",
         "agent-ready-cloudflare"
       ]
     },
@@ -52,7 +53,7 @@
     },
     {
       "title": "Career & Professional Positioning",
-      "description": "Resume ATS optimization, LinkedIn profile audit with SSI analysis, and automated development workflows.",
+      "description": "Resume ATS optimization, LinkedIn profile audit, and automated development workflows.",
       "skills": [
         "resume-ats-beater",
         "ralph-loop-kiro-specs",

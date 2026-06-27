@@ -6,6 +6,11 @@
       "sourceType": "local",
       "computedHash": "882b626807031174f939ef72bcc798acd4532d0a7c15033883ec6578806f7421"
     },
+    "astro-sites-manager": {
+      "source": "/home/fabricio/GIT/skills",
+      "sourceType": "local",
+      "computedHash": "23f0eab966c4a72caa88655e95d8fc8755fc0534e347d5882bf1aaf1fe0e4548"
+    },
     "auth-md": {
       "source": "/home/fabricio/GIT/skills",
       "sourceType": "local",
@@ -15,6 +20,11 @@
       "source": "/home/fabricio/GIT/skills",
       "sourceType": "local",
       "computedHash": "675904a42d06de5f99ad9da113e52eaffeea3bc334aab522f7f0f1d4d2a377f6"
+    },
+    "design-md-validator": {
+      "source": "/home/fabricio/GIT/skills",
+      "sourceType": "local",
+      "computedHash": "a334a8c5aaae3d1022835ec2acbcd5cb5a7081a33921846d16c9dbdda7b5c256"
     },
     "front-end-checklist": {
       "source": "/home/fabricio/GIT/skills",
@@ -61,6 +71,11 @@
       "sourceType": "local",
       "computedHash": "107b6f3282d7efcb55ff711790ccbf6e86e1aeb10344443d74dc9c834c8af197"
     },
+    "security-specialist": {
+      "source": "/home/fabricio/GIT/skills",
+      "sourceType": "local",
+      "computedHash": "11301a4403827a4c2e5dbc917321d713187d7e8d6f66b5bfed37e340254acca7"
+    },
     "substack-expert": {
       "source": "/home/fabricio/GIT/skills",
       "sourceType": "local",
@@ -75,16 +90,6 @@
       "source": "/home/fabricio/GIT/skills",
       "sourceType": "local",
       "computedHash": "063bfa6216a3dac71a0c87de2e95590f69a1e6fd74d589fc662f83e96b4e920d"
-    },
-    "astro-sites-manager": {
-      "source": "/home/fabricio/GIT/skills",
-      "sourceType": "local",
-      "computedHash": "23f0eab966c4a72caa88655e95d8fc8755fc0534e347d5882bf1aaf1fe0e4548"
-    },
-    "security-specialist": {
-      "source": "/home/fabricio/GIT/skills",
-      "sourceType": "local",
-      "computedHash": "11301a4403827a4c2e5dbc917321d713187d7e8d6f66b5bfed37e340254acca7"
     }
   }
 }

@@ -154,6 +154,15 @@ Audita qualquer website para prontidão de agentes de IA usando o scanner [isita
 
 ---
 
+### ✅ DESIGN.md Validator
+Valida arquivos DESIGN.md contra a [especificação oficial do Google](https://github.com/google-labs-code/design.md) usando o CLI `@google/design.md`. Funciona com arquivos locais e URLs remotas. Sempre usa `npx` para rodar a versão mais recente — nunca desatualizado.
+
+**Quando usar:** validar DESIGN.md contra a spec, checar contraste WCAG, encontrar referências de tokens quebradas, comparar duas versões de design system, exportar tokens para Tailwind v3/v4 ou W3C DTCG, auditar schema do frontmatter.
+
+📄 [Ver documentação completa](skills/design-md-validator/SKILL.md)
+
+---
+
 ### 🔁 Ralph Loop for Kiro Specs
 Runner iterativo automatizado para desenvolvimento baseado em specs no [Kiro](https://kiro.dev). Encapsula o `kiro-cli` em um loop bash auto-corretivo que pega tasks de uma Kiro spec, implementa uma por vez, verifica contra critérios de saída e acumula correções e padrões de codebase entre iterações. Baseado em [ralph-loop-kiro-specs](https://github.com/mreferre/ralph-loop-kiro-specs) por [mreferre](https://github.com/mreferre).
 

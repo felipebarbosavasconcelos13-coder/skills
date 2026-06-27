@@ -157,6 +157,15 @@ Audits any website for AI agent readiness using the Cloudflare [isitagentready.c
 
 ---
 
+### ✅ DESIGN.md Validator
+Validates DESIGN.md files against the official [Google design.md specification](https://github.com/google-labs-code/design.md) using the `@google/design.md` CLI linter. Works with local files and remote URLs. Always uses `npx` to run the latest published version — never stale.
+
+**When to use:** lint a DESIGN.md for spec compliance, check WCAG contrast ratios, find broken token references, diff two design system versions, export tokens to Tailwind v3/v4 or W3C DTCG format, audit frontmatter schema.
+
+📄 [View full documentation](skills/design-md-validator/SKILL.md)
+
+---
+
 ### 🔁 Ralph Loop for Kiro Specs
 Automated iterative agent runner for spec-based development in [Kiro](https://kiro.dev). Wraps `kiro-cli` in a self-correcting bash loop that picks up tasks from a Kiro spec, implements them one at a time, verifies against exit criteria, and accumulates corrections and codebase patterns across iterations. Based on [ralph-loop-kiro-specs](https://github.com/mreferre/ralph-loop-kiro-specs) by [mreferre](https://github.com/mreferre).
 
