@@ -216,17 +216,13 @@ Cria, valida e enriquece bundles no [Open Knowledge Format](https://github.com/G
 
 ---
 
-### 🌐 Website Spec (Edição Offline)
-Versão autocontida e offline de [The Website Specification](https://specification.website/) por Joost de Valk. Uma spec agnóstica de plataforma sobre o que um bom website deve fazer — 128 tópicos em 10 categorias (Foundations, SEO, Accessibility, Security, Well-Known URIs, Agent Readiness, Performance, Privacy, Resilience, i18n), cada um classificado como required/recommended/optional/avoid com guia de implementação e passos de verificação. Projetada para rodar sem acesso à rede em ambientes air-gapped, workflows de máxima privacidade e projetos internos.
+### 🌐 Website Spec _(movido)_
 
-**Quando usar:** auditar um website contra padrões web, verificar o que é obrigatório para produção, checar agent readiness, revisar security headers, rodar verificações de acessibilidade, gerar checklists de implementação, comparar resultados de auditoria entre execuções. Todo o conteúdo está empacotado localmente — nenhuma requisição externa necessária.
-
-**Atualização (Mai 2026) — Compliance total com LGPD:**
-- Seção de privacidade reescrita para 100% de compatibilidade com a LGPD brasileira (Lei 13.709/2018)
-- Cobre reorganização da ANPD em 2026 (Resolução 33), decisão de adequação mútua Brasil-UE (Resolução 32/2026), SCCs obrigatórias (Resolução 19/2024), modelo opt-in de consentimento para cookies, prazo de 15 dias para DSAR, notificação de incidentes em 3 dias úteis, 10 bases legais, requisitos de DPO/Encarregado, dados de crianças (ECA Digital) e decisões automatizadas/IA (Art. 20)
-- Todos os 6 arquivos de referência de privacidade atualizados: privacy-policy, cookie-consent, data-minimization, global-privacy-control, analytics-privacy, third-party-scripts
-
-📄 [Ver documentação completa](skills/website-spec/SKILL.md) | 🌐 [specification.website](https://specification.website/) (versão online/atualizada)
+> **Esta skill foi aposentada.** O projeto original agora oferece uma skill mais completa com 140+ tópicos, atualizações live via MCP server, re-audits incrementais e integração com MDN — muito além do que mantínhamos aqui.
+>
+> 👉 **Use a skill oficial:** https://specification.website/.well-known/agent-skills/specification-website/SKILL.md
+>
+> MCP endpoint: `https://mcp.specification.website/mcp`
 
 ---
 
@@ -327,7 +323,6 @@ npx skills add https://github.com/fabricioctelles/skills -s ralph-loop-kiro-spec
 npx skills add https://github.com/fabricioctelles/skills -s loop-architect
 npx skills add https://github.com/fabricioctelles/skills -s humanizar
 npx skills add https://github.com/fabricioctelles/skills -s auth-md
-npx skills add https://github.com/fabricioctelles/skills -s website-spec
 npx skills add https://github.com/fabricioctelles/skills -s security-specialist
 ```
 
@@ -370,7 +365,6 @@ cp -r skills/ralph-loop-kiro-specs .cursor/skills/
 cp -r skills/loop-architect .cursor/skills/
 cp -r skills/humanizar .cursor/skills/
 cp -r skills/auth-md .cursor/skills/
-cp -r skills/website-spec .cursor/skills/
 
 # Exemplo para Claude Code
 cp -r skills/geo-optimization .claude/skills/
@@ -384,7 +378,6 @@ cp -r skills/ralph-loop-kiro-specs .claude/skills/
 cp -r skills/loop-architect .claude/skills/
 cp -r skills/humanizar .claude/skills/
 cp -r skills/auth-md .claude/skills/
-cp -r skills/website-spec .claude/skills/
 
 # Exemplo para Kiro
 cp -r skills/geo-optimization .kiro/skills/
@@ -398,7 +391,6 @@ cp -r skills/ralph-loop-kiro-specs .kiro/skills/
 cp -r skills/loop-architect .kiro/skills/
 cp -r skills/humanizar .kiro/skills/
 cp -r skills/auth-md .kiro/skills/
-cp -r skills/website-spec .kiro/skills/
 ```
 
 O formato Agent Skills e universal e funciona com qualquer agente compativel. Veja a [especificacao oficial](https://agentskills.io/specification.md) para detalhes.
@@ -447,9 +439,6 @@ skills/
 ├── auth-md/
 │   ├── SKILL.md
 │   └── references/        # template do protocolo, regras de validação, schema de metadata, exemplo, guia de implementação
-├── website-spec/
-│   ├── SKILL.md
-│   └── references/        # 128 tópicos da spec em 10 pastas por categoria (bundle offline de specification.website)
 │   ├── SKILL.md
 │   └── references/        # 6 módulos de verificação de conformidade (política de privacidade, cookies, minimização, transferências, direitos, scripts)
 ```

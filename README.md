@@ -219,17 +219,13 @@ Create, validate, and enrich [Open Knowledge Format](https://github.com/GoogleCl
 
 ---
 
-### 🌐 Website Spec (Offline Edition)
-Self-contained offline version of [The Website Specification](https://specification.website/) by Joost de Valk. A platform-agnostic spec of what a good website does — 128 topics across 10 categories (Foundations, SEO, Accessibility, Security, Well-Known URIs, Agent Readiness, Performance, Privacy, Resilience, i18n), each tagged required/recommended/optional/avoid with implementation guidance and verification steps. Designed to run without network access in air-gapped environments, maximum-privacy workflows, and internal projects.
+### 🌐 Website Spec _(moved)_
 
-**When to use:** audit a website against web standards, check what is required for production, verify agent readiness, review security headers, run accessibility checks, generate implementation checklists, compare audit results between runs. All content is bundled locally — no external requests needed.
-
-**Update (May 2026) — Full LGPD compliance:**
-- Privacy section rewritten for 100% compatibility with Brazil's LGPD (Lei 13.709/2018)
-- Covers ANPD's 2026 reorganization (Resolution 33), Brazil-EU mutual adequacy decision (Resolution 32/2026), mandatory SCCs (Resolution 19/2024), opt-in cookie consent model, 15-day DSAR deadline, 3-business-day breach notification, 10 legal bases, DPO/Encarregado requirements, children's data (ECA Digital), and AI/automated decisions (Art. 20)
-- All 6 privacy reference files updated: privacy-policy, cookie-consent, data-minimization, global-privacy-control, analytics-privacy, third-party-scripts
-
-📄 [View full documentation](skills/website-spec/SKILL.md) | 🌐 [specification.website](https://specification.website/) (online/updated version)
+> **This skill has been retired.** The original project now offers a more complete skill with 140+ topics, live updates via MCP server, delta re-audits, and MDN pairing — far beyond what we maintained here.
+>
+> 👉 **Use the official skill:** https://specification.website/.well-known/agent-skills/specification-website/SKILL.md
+>
+> MCP endpoint: `https://mcp.specification.website/mcp`
 
 ---
 
@@ -328,7 +324,6 @@ npx skills add https://github.com/fabricioctelles/skills -s ralph-loop-kiro-spec
 npx skills add https://github.com/fabricioctelles/skills -s loop-architect
 npx skills add https://github.com/fabricioctelles/skills -s humanizar
 npx skills add https://github.com/fabricioctelles/skills -s auth-md
-npx skills add https://github.com/fabricioctelles/skills -s website-spec
 npx skills add https://github.com/fabricioctelles/skills -s astro-sites-manager
 npx skills add https://github.com/fabricioctelles/skills -s security-specialist
 ```
@@ -372,7 +367,6 @@ cp -r skills/ralph-loop-kiro-specs .cursor/skills/
 cp -r skills/loop-architect .cursor/skills/
 cp -r skills/humanizar .cursor/skills/
 cp -r skills/auth-md .cursor/skills/
-cp -r skills/website-spec .cursor/skills/
 cp -r skills/astro-sites-manager .cursor/skills/
 
 # Example for Claude Code
@@ -387,7 +381,6 @@ cp -r skills/ralph-loop-kiro-specs .claude/skills/
 cp -r skills/loop-architect .claude/skills/
 cp -r skills/humanizar .claude/skills/
 cp -r skills/auth-md .claude/skills/
-cp -r skills/website-spec .claude/skills/
 cp -r skills/astro-sites-manager .claude/skills/
 
 # Example for Kiro
@@ -402,7 +395,6 @@ cp -r skills/ralph-loop-kiro-specs .kiro/skills/
 cp -r skills/loop-architect .kiro/skills/
 cp -r skills/humanizar .kiro/skills/
 cp -r skills/auth-md .kiro/skills/
-cp -r skills/website-spec .kiro/skills/
 cp -r skills/astro-sites-manager .kiro/skills/
 ```
 
@@ -452,9 +444,6 @@ skills/
 ├── auth-md/
 │   ├── SKILL.md
 │   └── references/        # protocol template, validation rules, metadata schema, example, implementation guide
-├── website-spec/
-│   ├── SKILL.md
-│   └── references/        # 128 spec topics in 10 category folders (offline bundle from specification.website)
 │   ├── SKILL.md
 │   └── references/        # 6 compliance check modules (privacy policy, cookies, data minimization, transfers, rights, scripts)
 ```
