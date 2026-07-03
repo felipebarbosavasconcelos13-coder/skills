@@ -139,6 +139,45 @@ COPY --from=build /app/dist /srv
 **Affected projects:** Any Astro v7 project using Sätteri (default) or Starlight 0.40+ on Alpine.
 **Not affected:** Projects using `unified()` processor explicitly (they bypass Sätteri).
 
+### Sätteri Native Binding on ARM64 (Cross-Platform Lockfile)
+
+When the dev machine is x86_64 but the Coolify build server is ARM64 (e.g., OCI Ampere), `npm ci` and even `npm install --include=optional` fail with:
+
+```
+Cannot find module '@bruits/satteri-linux-arm64-gnu'
+Require stack:
+- /app/node_modules/satteri/index.js
+```
+
+**Root cause:** The `package-lock.json` was generated on x86_64 and only includes `@bruits/satteri-linux-x64-gnu` in its optional dependency tree. npm respects the lockfile's platform resolution even on a different architecture — this is [npm bug #4828](https://github.com/npm/cli/issues/4828).
+
+**What does NOT work:**
+- `.npmrc` with `include=optional` — npm still reads the lockfile's platform tree
+- `npm install --include=optional` in Dockerfile — lockfile still constrains resolution
+- Adding `@bruits/satteri-linux-arm64-gnu` to `optionalDependencies` — npm may still skip it
+
+**Fix:** Do NOT copy `package-lock.json` into the Docker build. Let npm resolve fresh on arm64:
+
+```dockerfile
+FROM node:22-slim AS build
+WORKDIR /app
+ENV NODE_OPTIONS="--max-old-space-size=512"
+COPY package.json .npmrc ./
+# Deliberately omit package-lock.json — forces fresh resolution on arm64
+RUN npm install
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80
+```
+
+**Tradeoff:** Build is slightly less deterministic (no lockfile pinning in Docker). For static sites this is acceptable. For SSR with strict reproducibility needs, generate the lockfile inside an arm64 container instead.
+
+**Affected:** Any Astro v7 project building on ARM64 servers when lockfile was generated on x86_64.
+**Confirmed working:** valeria.med.br on OCI Ampere A1 via Coolify (2026-07-03).
+
 ### legacy-peer-deps and npm ci in Docker
 
 When using `--legacy-peer-deps` locally (required for Astro v7 due to transient peer dep conflicts in Starlight plugins), Docker's `npm ci` will fail unless the `.npmrc` is copied into the container.
